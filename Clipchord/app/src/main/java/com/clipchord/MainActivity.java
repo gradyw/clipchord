@@ -1,17 +1,28 @@
 package com.clipchord;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,7 +30,25 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
 
-    Button testButton;
+    Button signInButton;
+    Button fileButton;
+    static FirebaseUser user;
+
+    public static FirebaseUser getUser() {
+        return user;
+    }
+
+    public static FirebaseStorage getStorage() {
+        return storage;
+    }
+
+    public static StorageReference getStorageRef() {
+        return storageRef;
+    }
+
+    private static FirebaseStorage storage = FirebaseStorage.getInstance();
+    private static StorageReference storageRef = storage.getReference();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Create and launch sign-in intent
 
-        testButton = findViewById(R.id.button);
-        testButton.setOnClickListener(new View.OnClickListener() {
+        signInButton = findViewById(R.id.SIGNIN);
+        signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
@@ -44,6 +73,58 @@ public class MainActivity extends AppCompatActivity {
                         RC_SIGN_IN);
             }
         });
+
+//        fileButton = findViewById(R.id.button);
+//        fileButton.setOnClickListener(new View.OnClickListener() {
+//
+//            @Override
+//            public void onClick(View v) {
+//
+//                Uri file = Uri.fromFile(new File("sdcard/Download/test.txt"));
+//                StorageReference fileRef = storageRef.child(file.getLastPathSegment());
+//                UploadTask uploadTask = fileRef.putFile(file);
+//
+//// Register observers to listen for when the download is done or if it fails
+//                uploadTask.addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception exception) {
+//                        System.out.println("Unsuccessful Upload");
+//                    }
+//                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+//                        // ...
+//                    }
+//                });
+//            }
+
+//            @Override
+//            public void onClick(View v) {
+//                StorageReference pathReference = storageRef.child("TestFile.txt");
+//                StorageReference gsReference = storage.getReferenceFromUrl("gs://clipchord.appspot.com/TestFile.txt");
+//                StorageReference httpsReference = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/clipchord.appspot.com/o/TestFile.txt");
+//
+//                try {
+//                    File localFile  = File.createTempFile("test","txt");
+//                    pathReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//                        @Override
+//                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                            System.out.println("FILE SUCCESS");
+//                        }
+//                    }).addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            System.out.println("FILE FAILURE");
+//                        }
+//                    });
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+
+
     }
 
     @Override
@@ -55,9 +136,13 @@ public class MainActivity extends AppCompatActivity {
 
             if (resultCode == RESULT_OK) {
                 // Successfully signed in
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                user = FirebaseAuth.getInstance().getCurrentUser();
+                System.out.println("Sign In Succeeded");
+                System.out.println(user.getEmail());
+                startActivity(new Intent(this, UploadTestActivity.class));
                 // ...
             } else {
+                System.out.println("Sign In Failed");
                 // Sign in failed. If response is null the user canceled the
                 // sign-in flow using the back button. Otherwise check
                 // response.getError().getErrorCode() and handle the error.

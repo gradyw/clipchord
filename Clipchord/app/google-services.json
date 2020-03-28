@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "303610186025",
+    "firebase_url": "https://clipchord.firebaseio.com",
+    "project_id": "clipchord",
+    "storage_bucket": "clipchord.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303610186025:android:6c42658992fee8f0af4f38",
+        "android_client_info": {
+          "package_name": "com.clipchord"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "303610186025-ov2k5d6ovl3t2u0ltbet63k1qiham7kg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3r9tYK9NTl2GZsYPcSQxA73ohgFkKNis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "303610186025-ov2k5d6ovl3t2u0ltbet63k1qiham7kg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

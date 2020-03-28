@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Create and launch sign-in intent
 
-        testButton.findViewById(R.id.button);
+        testButton = findViewById(R.id.button);
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

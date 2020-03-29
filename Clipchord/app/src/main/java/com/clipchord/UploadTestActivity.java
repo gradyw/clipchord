@@ -1,13 +1,18 @@
 package com.clipchord;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -24,6 +29,25 @@ public class UploadTestActivity extends AppCompatActivity {
         setContentView(R.layout.activity_uploadtest);
 
 
+
+
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.READ_EXTERNAL_STORAGE)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//
+//            // OPCIONAL(explicaciones de poque pedimos los permisos)
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+//
+//            } else {
+//                //pedir permisos
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+//                        permissionCheck);
+//            }
+//        }
+
         Button button = findViewById(R.id.upload);
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -31,7 +55,12 @@ public class UploadTestActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Uri file = Uri.fromFile(new File("sdcard/Download/test.txt"));
+
+
+                File uploadFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Download/test.txt");
+                System.out.println("File Exists" + uploadFile.exists());
+
+                Uri file = Uri.fromFile(uploadFile);
                 StorageReference fileRef = MainActivity.getStorageRef().child(file.getLastPathSegment());
                 UploadTask uploadTask = fileRef.putFile(file);
 

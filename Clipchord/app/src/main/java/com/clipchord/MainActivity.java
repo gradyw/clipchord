@@ -2,9 +2,15 @@ package com.clipchord;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -49,11 +55,21 @@ public class MainActivity extends AppCompatActivity {
     private static FirebaseStorage storage = FirebaseStorage.getInstance();
     private static StorageReference storageRef = storage.getReference();
 
+    private static final int STORAGE_REQUEST_CODE = 100;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (!checkPermissionForReadExtertalStorage()) {
+            try {
+                requestPermissionForReadExtertalStorage();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         // Choose authentication providers
 
@@ -64,6 +80,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
+
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    // Permission is not granted
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                            STORAGE_REQUEST_CODE);
+                }
+
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    // Permission is not granted
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            STORAGE_REQUEST_CODE);
+                }
+
 
                 MainActivity.this.startActivityForResult(
                         AuthUI.getInstance()
@@ -125,6 +160,25 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
 
+    }
+
+    public boolean checkPermissionForReadExtertalStorage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int result = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+            return result == PackageManager.PERMISSION_GRANTED;
+        }
+        return false;
+    }
+
+    public void requestPermissionForReadExtertalStorage() throws Exception {
+        try {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.READ_EXTERNAL_STORAGE));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override

@@ -19,6 +19,14 @@ admin.initializeApp({
 
 var bucket = admin.storage().bucket();
 
+
+class Group {
+	constructor(groupname, usernames) {
+		this.groupname = groupname;
+		this.usernames = usernames;
+	}
+}
+
 async function moveUserVideosFirebaseToLocal(groupname, username) {
     downloadFileAndDelete("Groups/" + groupname + "/" + username + ".mp4", "Groups/" + groupname + "/" + username + ".mp4");
 
@@ -27,7 +35,7 @@ async function moveUserVideosFirebaseToLocal(groupname, username) {
 async function downloadFile(name, destname) {
     const options = {
         // The path to which the file should be downloaded, e.g. "./file.txt"
-        destination: homedir + '/Desktop/Storage/' + destname
+        destination: appdir + destname
     };
 
     // Downloads the file
@@ -150,11 +158,25 @@ async function edit() {
 // edit();
 
 var groupsDownloaded = [];
-var groupsLeft = [];
+var groupsLeftOnServer = [];
 var groupsAwaitingReturn = [];
 var groupsComplete = [];
 while (true) {
-	var groups = [];
+	var groups = []; // a group would look like this [username, 3, [user1, user2, user3]] where 3 represents # of users
+
+	//while there are more groups add to groups and groupsLeftOnServer
+
+
+	// download each groups' videos and delete from firebase
+	for (var i = 0; i < groupsLeftOnServer.length; i++) {
+		for (var j = 0; j < groupsLeftOnServer[i].usernames.length; j++) {
+			moveUserVideosFirebaseToLocal(groupsLeftOnServer[i], groupsLeftOnServer[i].usernames[j]);
+		}
+		groupsDownloaded.push(groupsLeftOnServer[i]);
+		groupsLeftOnServer.splice(i, 1);
+	}
+
+
 	// fs.readFile(appdir + "/groups.csv");
 	// console.log(fs);
 
@@ -199,22 +221,3 @@ app.get('/', function(req, res) {
 app.listen(PORT, function() {
     console.log('Server is running on PORT:', PORT);
 });
-
-
-
-
-
-
-
-
-// var http = require('http');
-
-// var server = http.createServer(function(req, res) {
-//     res.writeHead(200, { "Content-type": "text/plain"
-// });
-//     res.end("Hello world\n");
-// });
-
-// server.listen(3000, function() {
-//     console.log('Server is running at 3000')
-// });

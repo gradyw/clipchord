@@ -21,14 +21,15 @@ var bucket = admin.storage().bucket();
 
 
 class Group {
-	constructor(groupname, usernames) {
-		this.groupname = groupname;
-		this.usernames = usernames;
+	constructor(groupid, usernames, downloaded) {
+		this.groupid = groupid;
+        this.groupid = usernames;
+        this.download = downloaded;
     }
 }
 
-async function moveUserVideosFirebaseToLocal(groupname, username) {
-    downloadFileAndDelete("Groups/" + groupname + "/" + username + ".mp4", "Groups/" + groupname + "/" + username + ".mp4");
+async function moveUserVideosFirebaseToLocal(groupid, username) {
+    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid + "/" + username + ".mp4");
 
 }
 
@@ -40,23 +41,23 @@ async function downloadFile(name, destname) {
 
     // Downloads the file
     await bucket
-        .file("PaperMoon/" + name)
+        .file(name)
         .download(options);
 
     console.log(
         'success'
     );
 
-    return bucket.file("PaperMoon/" + name);
+    return bucket.file(name);
 }
 async function downloadFileAndDelete(name, destname) {
     const downloadedFile = downloadFile(name, destname);
     (await downloadedFile).delete();
 }
 
-async function uploadCompletedVideo(groupname) {
-    bucket.upload(appdir + "/" + groupname + "final.mp4", {
-        destination: "Groups/" + groupname + "/" + "final.mp4"
+async function uploadCompletedVideo(groupid) {
+    bucket.upload(appdir + "/" + groupid + "final.mp4", {
+        destination: "Groups/" + groupid + "/" + "final.mp4"
     });
 }
 
@@ -170,16 +171,31 @@ var groupsRequested = [];
 var groupsComplete = [];
 while (true) {
 	var groups = []; // a group is a Group object
+    downloadFile("groups.csv", "groups.csv");
+    var groupcsv = fs.readFile(appdir + 'groups.csv', async (err, data) => {
+        if (err) {
+            console.error(err);
+            return
+        }
+        await neatcsv(data);
+    })
 
+    for (var i = 0; i < groupcsv.length; i++) {
+        groups.push(new Group(groupcsv[i][0], groupcsv[i][2], groupcsv[i][3] == 1));
+    }
 	//while there are more groups add to groups and groupsLeftOnServer
+    groups.forEach(group => {
+        if (!group.download) groupsLeftOnServer.push(group);
+    })
 
 
 	// download each groups' videos and delete from firebase
 	for (var i = 0; i < groupsLeftOnServer.length; i++) {
 		for (var j = 0; j < groupsLeftOnServer[i].usernames.length; j++) {
 			moveUserVideosFirebaseToLocal(groupsLeftOnServer[i], groupsLeftOnServer[i].usernames[j]);
-		}
-		groupsDownloaded.push(groupsLeftOnServer[i]);
+        }
+        groupsLeftOnServer[i].downloaded = true;
+        groupsDownloaded.push(groupsLeftOnServer[i]);
 		groupsLeftOnServer.splice(i, 1);
 	}
 
@@ -195,7 +211,7 @@ while (true) {
 
     // upload groupsRequested
     for (var i = 0; i < groupsRequested.length; i++) {
-        uploadCompletedVideo(groupsRequested[i].groupname);
+        uploadCompletedVideo(groupsRequested[i].groupid);
     }
 
     // check for signal from users that we can delete the video, and delete it

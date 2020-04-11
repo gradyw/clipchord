@@ -24,7 +24,7 @@ class Group {
 	constructor(groupname, usernames) {
 		this.groupname = groupname;
 		this.usernames = usernames;
-	}
+    }
 }
 
 async function moveUserVideosFirebaseToLocal(groupname, username) {
@@ -52,6 +52,12 @@ async function downloadFile(name, destname) {
 async function downloadFileAndDelete(name, destname) {
     const downloadedFile = downloadFile(name, destname);
     (await downloadedFile).delete();
+}
+
+async function uploadCompletedVideo(groupname) {
+    bucket.upload(appdir + "/" + groupname + "final.mp4", {
+        destination: "Groups/" + groupname + "/" + "final.mp4"
+    });
 }
 
 // TODO need to change this to accept the files as parameters
@@ -160,9 +166,10 @@ async function edit() {
 var groupsDownloaded = [];
 var groupsLeftOnServer = [];
 var groupsAwaitingReturn = [];
+var groupsRequested = [];
 var groupsComplete = [];
 while (true) {
-	var groups = []; // a group would look like this [username, 3, [user1, user2, user3]] where 3 represents # of users
+	var groups = []; // a group is a Group object
 
 	//while there are more groups add to groups and groupsLeftOnServer
 
@@ -176,16 +183,33 @@ while (true) {
 		groupsLeftOnServer.splice(i, 1);
 	}
 
+    // edit the next group in groupsDownloaded and move it to groupsAwaitingReturn
+    edit(groupsDownloaded[0]);
+    groupsAwaitingReturn.push(groupsDownloaded[0]);
+    groupsDownloaded.splice(0, 1);
+
+
+
+    // check for signal and add to groupsRequested, ensure that group is in groupsAwaitingReturn
+
+
+    // upload groupsRequested
+    for (var i = 0; i < groupsRequested.length; i++) {
+        uploadCompletedVideo(groupsRequested[i].groupname);
+    }
+
+    // check for signal from users that we can delete the video, and delete it
+
+
 
 	// fs.readFile(appdir + "/groups.csv");
 	// console.log(fs);
 
 
 	// TODO figure out how to wait
-	// setTimeout(() => {
-	// 	var groups = [];
-	// 	groups[0] = 1;
-	// }, 10000);
+	setTimeout(() => {
+		console.log("1 Loop");
+	}, 10000);
 }
 
 

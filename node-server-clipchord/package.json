@@ -1,0 +1,31 @@
+{
+  "name": "node-server-clipchord",
+  "version": "1.0.0",
+  "description": "\"Node.js server for Clipchord App\"",
+  "main": "server.js",
+  "scripts": {
+    "test": " \"echo \\\"Error: no test specified\\\" && exit 1\"",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gradyw/clipchord-server.git"
+  },
+  "keywords": [
+    "[\"Node.js\"",
+    "\"Web\"",
+    "\"server\"]"
+  ],
+  "author": "\"Grady Whelan\"",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gradyw/clipchord-server/issues"
+  },
+  "homepage": "https://github.com/gradyw/clipchord-server#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "firebase-admin": "^8.10.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "neat-csv": "^5.2.0"
+  }
+}

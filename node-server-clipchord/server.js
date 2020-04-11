@@ -199,17 +199,16 @@ while (true) {
     }
 
     // check for signal from users that we can delete the video, and delete it
-
-
+	
 
 	// fs.readFile(appdir + "/groups.csv");
 	// console.log(fs);
 
 
 	// TODO figure out how to wait
-	setTimeout(() => {
-		console.log("1 Loop");
-	}, 10000);
+	// setTimeout(() => {
+		// console.log("1 Loop");
+	// }, 10000);
 }
 
 
@@ -238,10 +237,3 @@ while (true) {
 	// console.log(snapshot.val());
 // });
 
-app.get('/', function(req, res) {
-    res.status(200).send('Hello world');
-});
-
-app.listen(PORT, function() {
-    console.log('Server is running on PORT:', PORT);
-});

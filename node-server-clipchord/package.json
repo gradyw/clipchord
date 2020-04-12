@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": " \"echo \\\"Error: no test specified\\\" && exit 1\"",
-    "start": "node server.js"
+    "build": "tsc",
+    "start": "npm run build && node build/server.js"
   },
   "repository": {
     "type": "git",
@@ -16,7 +17,7 @@
     "\"Web\"",
     "\"server\"]"
   ],
-  "author": "\"Grady Whelan\"",
+  "author": "\"Grady Whelan, Daniel Tsai\"",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/gradyw/clipchord-server/issues"
@@ -27,5 +28,9 @@
     "firebase-admin": "^8.10.0",
     "fluent-ffmpeg": "^2.1.2",
     "neat-csv": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.11.1",
+    "typescript": "^3.8.3"
   }
 }

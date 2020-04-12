@@ -1,6 +1,14 @@
 export {}
-import * as fs from 'fs';
-import * as neatcsv from 'neat-csv';
+// import * as fs from 'fs';
+// import neatCsv = require('neat-csv');
+
+import * as csv from 'csv';
+const obj = csv();
+
+function myCSV(groupid: number, groupname: string, usernames: string[]) {
+    
+}
+
 let express = require('express');
 let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
@@ -173,27 +181,38 @@ async function edit() {
 }
 edit();
 
-let groupsDownloaded: Group[];
-let groupsLeftOnServer: Group[];
-let groupsAwaitingReturn: Group[];
-let groupsRequested: Group[];
-let groupsComplete: Group[];
+let groupsDownloaded: Group[] = [];
+let groupsLeftOnServer: Group[] = [];
+let groupsAwaitingReturn: Group[] = [];
+let groupsRequested: Group[] = [];
+let groupsComplete: Group[] = [];
 
 /*while (true) {
-    let groups: Group[];
+    let groups: Group[] = [];
+    // let groupcsv: neatCsv.Row[] = [];
 
-    // TODO figure out why this is returning void
-    let groupcsv = fs.readFile(appdir + 'groups.csv', async (err, data) => {
-        if (err) {
-            console.error(err);
-            return
+
+    obj.from.path(appdir + 'groups.csv').to.array(function (data: string | any[]) {
+        for (let i = 0; i < data.length; i++) {
+            groups.push(new Group(data[i][0] as unknown as number, data[i][2], data[i][3] as unknown as number == 1));
         }
-        await neatcsv(data);
     })
+    // TODO figure out why this is returning void
+    // let groupcsv: neatCsv.Row[] = fs.readFile(appdir + 'groups.csv', 'utf8', async (err, data) => {
+        // if (err) {
+            // console.error(err);
+            // return [];
+        // }
+        // await neatCsv(data);
+    // });
 
-    for (let i = 0; i < groupcsv.length; i++) {
-        groups.push(new Group((groupcsv[i][0] as unknown as number), groupcsv[i][2], groupcsv[i][3] == 1));
-    }
+    // (async () => {
+    //     groupcsv = await neatCsv(fs.readFile(appdir + "groups.csv", 'utf8'));
+    // })();
+
+    // for (let i = 0; i < groupcsv.length; i++) {
+    //     groups.push(new Group((groupcsv[i][0] as unknown as number), groupcsv[i][2], groupcsv[i][3] == 1));
+    // }
 
     //while there are more groups add to groups and groupsLeftOnServer
     groups.forEach(group => {

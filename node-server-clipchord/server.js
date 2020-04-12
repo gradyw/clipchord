@@ -36,8 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-var fs_1 = require("fs");
-var neat_csv_1 = require("neat-csv");
+var fs = require("fs");
+var neatcsv = require("neat-csv");
 var express = require('express');
 var admin = require('firebase-admin');
 var ffmpeg = require('fluent-ffmpeg');
@@ -128,7 +128,8 @@ var groupsRequested;
 var groupsComplete;
 while (true) {
     var groups = void 0;
-    var groupcsv = fs_1["default"].readFile(appdir + 'groups.csv', function (err, data) { return __awaiter(void 0, void 0, void 0, function () {
+    // TODO figure out why this is returning void
+    var groupcsv = fs.readFile(appdir + 'groups.csv', function (err, data) { return __awaiter(void 0, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -136,7 +137,7 @@ while (true) {
                         console.error(err);
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, neat_csv_1["default"](data)];
+                    return [4 /*yield*/, neatcsv(data)];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];

@@ -1,6 +1,6 @@
 export {}
-import fs from 'fs';
-import neatcsv from 'neat-csv';
+import * as fs from 'fs';
+import * as neatcsv from 'neat-csv';
 let express = require('express');
 let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
@@ -85,7 +85,8 @@ let groupsComplete: Group[];
 while (true) {
     let groups: Group[];
 
-    let groupcsv : Array<any> = fs.readFile(appdir + 'groups.csv', async (err, data: Array<any>) => {
+    // TODO figure out why this is returning void
+    let groupcsv = fs.readFile(appdir + 'groups.csv', async (err, data) => {
         if (err) {
             console.error(err);
             return
@@ -94,7 +95,7 @@ while (true) {
     })
 
     for (let i = 0; i < groupcsv.length; i++) {
-        groups.push(new Group(groupcsv[i][0], groupcsv[i][2], groupcsv[i][3] == 1));
+        groups.push(new Group((groupcsv[i][0] as unknown as number), groupcsv[i][2], groupcsv[i][3] == 1));
     }
 
     //while there are more groups add to groups and groupsLeftOnServer

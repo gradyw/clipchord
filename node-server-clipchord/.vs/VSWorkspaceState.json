@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\build",
+    "\\src"
   ],
-  "SelectedNode": "\\server.js",
+  "SelectedNode": "\\src\\server.ts",
   "PreviewInSolutionExplorer": false
 }

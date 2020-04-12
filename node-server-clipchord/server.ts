@@ -1,25 +1,25 @@
 export {}
 
-var express = require('express');
-var admin = require('firebase-admin');
-var ffmpeg = require('fluent-ffmpeg');
+let express = require('express');
+let admin = require('firebase-admin');
+let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const fs = require('fs');
 const appdir = homedir + 'Desktop/Storage/ClipchordApp';
 const neatcsv = require('neat-csv');
 
-var serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk-i4et0-50616b8a54.json");
+let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk-i4et0-50616b8a54.json");
 
-var app = express();
+let app = express();
 
-var PORT = 3000;
+let PORT = 3000;
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
 	storageBucket: "clipchord.appspot.com"
 });
 
-var bucket = admin.storage().bucket();
+let bucket = admin.storage().bucket();
 
 //TODO encapsulate member variables
 class Group {

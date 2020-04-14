@@ -197,35 +197,51 @@ let groupsComplete: Group[] = [];
 
 let groups: Group[] = [];
 
-function populateCSV() : any[] { 
+async function populateCSV() { 
+
+    let csvStream = fs.createReadStream(appdir + 'groups.csv');
     let groupslist: any[] = [];
-    fs.createReadStream(appdir + 'groups.csv')
-        .pipe(csv())
-        .on('data', (data) => {
-            // console.log(data);
-            groupslist.push(data);
-            // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
-        })
-        .on('end', () => {
-            console.log('end');
-            console.log(groupslist);
-            // console.log(groups);
-        });
-    return groupslist;
+    await new Promise((resolve) => {
+        csvStream
+            .pipe(csv())
+            .on('data', (data) => {
+                // console.log(data);
+                groupslist.push(data);
+                // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
+            })
+            .on('end', () => {
+                console.log('end');
+                console.log(groupslist);
+                resolve();
+                // console.log(groups);
+            });
+    });
+    await new Promise(() => {
+        for (let i = 0; i < groupslist.length; i++) {
+            console.log('in for loop');
+            console.log(groupslist[i] as string);
+            // let a: string[] = (groupslist[i] as Map)
+            // console.log(a);
+            // console.log(typeof(groupslist[i][0]));
+            // groups.push(new Group(groupslist[i].get('ID') as number, groupslist[i].get('USERNAMES') as string[], groupslist[i].get('DOWNLOADED') as number == 1));
+        }
+    });
 }
 
-function run(): void {
-    let list1: any[] = populateCSV();
-    console.log(list1.length);
-    for (let i = 0; i < list1.length; i++) {
-        console.log('in for loop');
-        groups.push(new Group(list1[i].get('ID') as number, list1[i].get('USERNAMES') as string[], list1[i].get('DOWNLOADED') as number == 1));
-    }
+populateCSV();
 
-    console.log(groups);
-}
+// function run(): void {
+//     let list1 = populateCSV();
+//     console.log(list1.length);
+//     for (let i = 0; i < list1.length; i++) {
+//         console.log('in for loop');
+//         groups.push(new Group(list1[i].get('ID') as number, list1[i].get('USERNAMES') as string[], list1[i].get('DOWNLOADED') as number == 1));
+//     }
 
-run();
+//     console.log(groups);
+// }
+
+// run();
 
 
 

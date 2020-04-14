@@ -167,32 +167,46 @@ let groupsAwaitingReturn = [];
 let groupsRequested = [];
 let groupsComplete = [];
 let groups = [];
-function populateCSV() {
+async function populateCSV() {
+    let csvStream = fs_1.default.createReadStream(appdir + 'groups.csv');
     let groupslist = [];
-    fs_1.default.createReadStream(appdir + 'groups.csv')
-        .pipe(csv_parser_1.default())
-        .on('data', (data) => {
-        // console.log(data);
-        groupslist.push(data);
-        // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
-    })
-        .on('end', () => {
-        console.log('end');
-        console.log(groupslist);
-        // console.log(groups);
+    await new Promise((resolve) => {
+        csvStream
+            .pipe(csv_parser_1.default())
+            .on('data', (data) => {
+            // console.log(data);
+            groupslist.push(data);
+            // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
+        })
+            .on('end', () => {
+            console.log('end');
+            console.log(groupslist);
+            resolve();
+            // console.log(groups);
+        });
     });
-    return groupslist;
+    await new Promise(() => {
+        for (let i = 0; i < groupslist.length; i++) {
+            console.log('in for loop');
+            console.log(groupslist[i]);
+            // let a: string[] = (groupslist[i] as Map)
+            // console.log(a);
+            // console.log(typeof(groupslist[i][0]));
+            // groups.push(new Group(groupslist[i].get('ID') as number, groupslist[i].get('USERNAMES') as string[], groupslist[i].get('DOWNLOADED') as number == 1));
+        }
+    });
 }
-function run() {
-    let list1 = populateCSV();
-    console.log(list1.length);
-    for (let i = 0; i < list1.length; i++) {
-        console.log('in for loop');
-        groups.push(new Group(list1[i].get('ID'), list1[i].get('USERNAMES'), list1[i].get('DOWNLOADED') == 1));
-    }
-    console.log(groups);
-}
-run();
+populateCSV();
+// function run(): void {
+//     let list1 = populateCSV();
+//     console.log(list1.length);
+//     for (let i = 0; i < list1.length; i++) {
+//         console.log('in for loop');
+//         groups.push(new Group(list1[i].get('ID') as number, list1[i].get('USERNAMES') as string[], list1[i].get('DOWNLOADED') as number == 1));
+//     }
+//     console.log(groups);
+// }
+// run();
 /*while (true) {
     let groups: Group[] = [];
     // let groupcsv: neatCsv.Row[] = [];

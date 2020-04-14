@@ -2,8 +2,12 @@ export {}
 // import * as fs from 'fs';
 // import neatCsv = require('neat-csv');
 
-import * as csv from 'csv';
-const obj = csv();
+// import * as csv from 'csv';
+// const obj = csv();
+
+import csv from 'csv-parser';
+import fs from 'fs';
+import { Transform } from 'stream';
 
 function myCSV(groupid: number, groupname: string, usernames: string[]) {
     
@@ -38,6 +42,10 @@ class Group {
 		this.groupid = groupid;
         this.usernames = usernames;
         this.downloaded = downloaded;
+    }
+
+    toString() : string {
+        return this.groupid + ", " + this.usernames.toString + ", " + this.downloaded;
     }
 }
 
@@ -179,7 +187,7 @@ async function edit() {
         console.log('an error happened: ' + err.message);
     }).run();
 }
-edit();
+// edit();
 
 let groupsDownloaded: Group[] = [];
 let groupsLeftOnServer: Group[] = [];
@@ -187,16 +195,59 @@ let groupsAwaitingReturn: Group[] = [];
 let groupsRequested: Group[] = [];
 let groupsComplete: Group[] = [];
 
+let groups: Group[] = [];
+
+function populateCSV() : any[] { 
+    let groupslist: any[] = [];
+    fs.createReadStream(appdir + 'groups.csv')
+        .pipe(csv())
+        .on('data', (data) => {
+            // console.log(data);
+            groupslist.push(data);
+            // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
+        })
+        .on('end', () => {
+            console.log('end');
+            console.log(groupslist);
+            // console.log(groups);
+        });
+    return groupslist;
+}
+
+function run(): void {
+    let list1: any[] = populateCSV();
+    console.log(list1.length);
+    for (let i = 0; i < list1.length; i++) {
+        console.log('in for loop');
+        groups.push(new Group(list1[i].get('ID') as number, list1[i].get('USERNAMES') as string[], list1[i].get('DOWNLOADED') as number == 1));
+    }
+
+    console.log(groups);
+}
+
+run();
+
+
+
 /*while (true) {
     let groups: Group[] = [];
     // let groupcsv: neatCsv.Row[] = [];
 
 
-    obj.from.path(appdir + 'groups.csv').to.array(function (data: string | any[]) {
-        for (let i = 0; i < data.length; i++) {
-            groups.push(new Group(data[i][0] as unknown as number, data[i][2], data[i][3] as unknown as number == 1));
-        }
-    })
+    fs.createReadStream(appdir + 'groups.csv')
+        .pipe(csv())
+        .on('data', (data) => 
+            groups.push(new Group(data[0], data[2], data[3] == 1))
+        )
+        .on('end', () => {
+            console.log(groups);
+        });
+
+    // obj.from.path(appdir + 'groups.csv').to.array(function (data: string | any[]) {
+        // for (let i = 0; i < data.length; i++) {
+            // groups.push(new Group(data[i][0] as unknown as number, data[i][2], data[i][3] as unknown as number == 1));
+        // }
+    // })
     // TODO figure out why this is returning void
     // let groupcsv: neatCsv.Row[] = fs.readFile(appdir + 'groups.csv', 'utf8', async (err, data) => {
         // if (err) {

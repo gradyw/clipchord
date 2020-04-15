@@ -34,18 +34,35 @@ let bucket = admin.storage().bucket();
 
 //TODO encapsulate member variables
 class Group {
-    groupid: number;
-    usernames: string[];
-    downloaded: boolean;
+    private id: number;
+    private usernames: string[];
+    private downloaded: boolean;
 
-	constructor(groupid: number, usernames: string[], downloaded: boolean) {
-		this.groupid = groupid;
-        this.usernames = usernames;
+	constructor(id: number, usernames: string, downloaded: boolean) {
+		this.id = id;
         this.downloaded = downloaded;
+        this.usernames = [];
+        usernames = usernames.substring(1, usernames.length - 1);
+        let nameslist: string[] = usernames.split(';');
+        for (let i = 0; i < nameslist.length; i++) {
+            this.usernames.push(nameslist[i]);
+        }
+    }
+
+    getID() : number {
+        return this.id; 
+    }
+
+    getUsernames() : string[] {
+        return this.usernames;
+    }
+
+    getDownloaded() : boolean {
+        return this.downloaded;
     }
 
     toString() : string {
-        return this.groupid + ", " + this.usernames.toString + ", " + this.downloaded;
+        return this.id + ", " + this.usernames.toString + ", " + this.downloaded;
     }
 }
 
@@ -197,53 +214,31 @@ let groupsComplete: Group[] = [];
 
 let groups: Group[] = [];
 
-async function populateCSV() { 
+async function populateFromCSV() { 
 
     let csvStream = fs.createReadStream(appdir + 'groups.csv');
     let groupslist: any[] = [];
     await new Promise((resolve) => {
         csvStream
-            .pipe(csv())
+            .pipe(csv(['ID', 'GROUPNAME', 'USERNAMES', 'DOWNLOADED']))
             .on('data', (data) => {
-                // console.log(data);
                 groupslist.push(data);
-                // groups.push(new Group(data.read.toString as unknown as number, data[2] as unknown as Array<string>, data[3] as unknown as number == 1));
             })
             .on('end', () => {
-                console.log('end');
-                console.log(groupslist);
                 resolve();
-                // console.log(groups);
             });
     });
-    await new Promise(() => {
-        for (let i = 0; i < groupslist.length; i++) {
-            console.log('in for loop');
-            console.log(groupslist[i] as string);
-            // let a: string[] = (groupslist[i] as Map)
-            // console.log(a);
-            // console.log(typeof(groupslist[i][0]));
-            // groups.push(new Group(groupslist[i].get('ID') as number, groupslist[i].get('USERNAMES') as string[], groupslist[i].get('DOWNLOADED') as number == 1));
+    await new Promise((resolve) => {
+        for (let i = 1; i < groupslist.length; i++) {
+            groups.push(new Group(groupslist[i]['ID'] as number, groupslist[i]['USERNAMES'] as string,
+                groupslist[i]['DOWNLOADED'] as number == 1));
         }
+        resolve();
     });
+    console.log(groups);
 }
 
-populateCSV();
-
-// function run(): void {
-//     let list1 = populateCSV();
-//     console.log(list1.length);
-//     for (let i = 0; i < list1.length; i++) {
-//         console.log('in for loop');
-//         groups.push(new Group(list1[i].get('ID') as number, list1[i].get('USERNAMES') as string[], list1[i].get('DOWNLOADED') as number == 1));
-//     }
-
-//     console.log(groups);
-// }
-
-// run();
-
-
+populateFromCSV();
 
 /*while (true) {
     let groups: Group[] = [];

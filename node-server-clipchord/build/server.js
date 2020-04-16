@@ -24,12 +24,12 @@ admin.initializeApp({
     storageBucket: "clipchord.appspot.com"
 });
 let bucket = admin.storage().bucket();
-//TODO encapsulate member variables
 class Group {
-    constructor(id, usernames, downloaded) {
+    constructor(id, groupname, usernames, downloaded) {
         this.id = id;
-        this.downloaded = downloaded;
+        this.groupname = groupname;
         this.usernames = [];
+        this.downloaded = downloaded;
         usernames = usernames.substring(1, usernames.length - 1);
         let nameslist = usernames.split(';');
         for (let i = 0; i < nameslist.length; i++) {
@@ -44,9 +44,6 @@ class Group {
     }
     getDownloaded() {
         return this.downloaded;
-    }
-    toString() {
-        return this.id + ", " + this.usernames.toString + ", " + this.downloaded;
     }
 }
 function delay(ms) {
@@ -196,7 +193,7 @@ async function populateFromCSV() {
     });
     await new Promise((resolve) => {
         for (let i = 1; i < groupslist.length; i++) {
-            groups.push(new Group(groupslist[i]['ID'], groupslist[i]['USERNAMES'], groupslist[i]['DOWNLOADED'] == 1));
+            groups.push(new Group(groupslist[i]['ID'], groupslist[i]['GROUPNAME'], groupslist[i]['USERNAMES'], groupslist[i]['DOWNLOADED'] == 1));
         }
         resolve();
     });

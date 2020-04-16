@@ -32,16 +32,17 @@ admin.initializeApp({
 
 let bucket = admin.storage().bucket();
 
-//TODO encapsulate member variables
 class Group {
     private id: number;
+    private groupname: string;
     private usernames: string[];
     private downloaded: boolean;
 
-	constructor(id: number, usernames: string, downloaded: boolean) {
-		this.id = id;
-        this.downloaded = downloaded;
+	constructor(id: number, groupname: string, usernames: string, downloaded: boolean) {
+        this.id = id;
+        this.groupname = groupname;
         this.usernames = [];
+        this.downloaded = downloaded;
         usernames = usernames.substring(1, usernames.length - 1);
         let nameslist: string[] = usernames.split(';');
         for (let i = 0; i < nameslist.length; i++) {
@@ -59,10 +60,6 @@ class Group {
 
     getDownloaded() : boolean {
         return this.downloaded;
-    }
-
-    toString() : string {
-        return this.id + ", " + this.usernames.toString + ", " + this.downloaded;
     }
 }
 
@@ -230,7 +227,7 @@ async function populateFromCSV() {
     });
     await new Promise((resolve) => {
         for (let i = 1; i < groupslist.length; i++) {
-            groups.push(new Group(groupslist[i]['ID'] as number, groupslist[i]['USERNAMES'] as string,
+            groups.push(new Group(groupslist[i]['ID'] as number, groupslist[i]['GROUPNAME'] as string, groupslist[i]['USERNAMES'] as string,
                 groupslist[i]['DOWNLOADED'] as number == 1));
         }
         resolve();

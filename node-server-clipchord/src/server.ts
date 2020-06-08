@@ -61,6 +61,10 @@ class Group {
     getDownloaded() : boolean {
         return this.downloaded;
     }
+
+    setDownloaded(downloaded: boolean) : void {
+        this.downloaded = downloaded;
+    }
 }
 
 function delay(ms: number) {
@@ -235,9 +239,9 @@ async function populateFromCSV() {
     console.log(groups);
 }
 
-populateFromCSV();
+// populateFromCSV();
 
-/*while (true) {
+while (true) {
     let groups: Group[] = [];
     // let groupcsv: neatCsv.Row[] = [];
 
@@ -245,7 +249,7 @@ populateFromCSV();
     fs.createReadStream(appdir + 'groups.csv')
         .pipe(csv())
         .on('data', (data) => 
-            groups.push(new Group(data[0], data[2], data[3] == 1))
+            groups.push(new Group(data[0], data[1], data[2], data[3] == 1))
         )
         .on('end', () => {
             console.log(groups);
@@ -275,15 +279,15 @@ populateFromCSV();
 
     //while there are more groups add to groups and groupsLeftOnServer
     groups.forEach(group => {
-        if (!group.downloaded) groupsLeftOnServer.push(group);
+        if (!group.getDownloaded()) groupsLeftOnServer.push(group);
     })
 
     // download each groups' videos and delete from firebase
 	for (let i = 0; i < groupsLeftOnServer.length; i++) {
-		for (let j = 0; j < groupsLeftOnServer[i].usernames.length; j++) {
-			moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].groupid, groupsLeftOnServer[i].usernames[j]);
+		for (let j = 0; j < groupsLeftOnServer[i].getUsernames().length; j++) {
+			moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].getID(), groupsLeftOnServer[i].getUsernames()[j]);
         }
-        groupsLeftOnServer[i].downloaded = true;
+        groupsLeftOnServer[i].setDownloaded(true);
         groupsDownloaded.push(groupsLeftOnServer[i]);
 		groupsLeftOnServer.splice(i, 1);
 	}
@@ -298,7 +302,7 @@ populateFromCSV();
 
     // upload groupsRequested
     for (let i = 0; i < groupsRequested.length; i++) {
-        uploadCompletedVideo(groupsRequested[i].groupid);
+        uploadCompletedVideo(groupsRequested[i].getID());
     }
 
     // check for signal from users that we can delete the video, and delete it
@@ -306,4 +310,4 @@ populateFromCSV();
     
     // wait before continuing the loop
     delay(10000);
-}*/
+}

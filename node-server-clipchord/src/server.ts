@@ -96,6 +96,7 @@ async function downloadFile(name: string, destname: string) {
 }
 
 async function downloadFileAndDelete(name: string, destname: string) {
+    console.log("dest" + name + destname);
     const downloadedFile = downloadFile(name, destname);
     (await downloadedFile).delete();
 }
@@ -207,6 +208,8 @@ async function edit() {
 }
 // edit();
 
+console.log("test1")
+
 let groupsDownloaded: Group[] = [];
 let groupsLeftOnServer: Group[] = [];
 let groupsAwaitingReturn: Group[] = [];
@@ -239,75 +242,110 @@ async function populateFromCSV() {
     console.log(groups);
 }
 
+
+async function read(dir: string) {
+    fs.createReadStream(dir)
+            .pipe(csv())
+            .on('data', (data) => {
+                groups.push(new Group(data['ID'], data['GROUPNAME'], data['USERNAMES'], data['DOWNLOADED'] == 1));
+                console.log(groups);
+    
+            })
+            .on('end', () => {
+                console.log(groups);
+    });
+}
+
 // populateFromCSV();
 
-while (true) {
-    let groups: Group[] = [];
-    // let groupcsv: neatCsv.Row[] = [];
+let x = 1;
 
-
-    fs.createReadStream(appdir + 'groups.csv')
-        .pipe(csv())
-        .on('data', (data) => 
-            groups.push(new Group(data[0], data[1], data[2], data[3] == 1))
-        )
-        .on('end', () => {
-            console.log(groups);
-        });
-
-    // obj.from.path(appdir + 'groups.csv').to.array(function (data: string | any[]) {
-        // for (let i = 0; i < data.length; i++) {
-            // groups.push(new Group(data[i][0] as unknown as number, data[i][2], data[i][3] as unknown as number == 1));
+async function run() {
+    while (true) {
+        let groups: Group[] = [];
+        // let groupcsv: neatCsv.Row[] = [];
+    
+        console.log("test2");
+        console.log(appdir+'groups.csv');
+        
+        
+        await new Promise((resolve) => fs.createReadStream(appdir + 'groups.csv')
+            .pipe(csv())
+            .on('data', (data) => {
+                groups.push(new Group(data['ID'], data['GROUPNAME'], data['USERNAMES'], data['DOWNLOADED'] == 1));
+                console.log(groups);
+    
+            })
+            .on('end', () => {
+                console.log(groups);
+                resolve()
+            }));
+    
+        // obj.from.path(appdir + 'groups.csv').to.array(function (data: string | any[]) {
+            // for (let i = 0; i < data.length; i++) {
+                // groups.push(new Group(data[i][0] as unknown as number, data[i][2], data[i][3] as unknown as number == 1));
+            // }
+        // })
+        // TODO figure out why this is returning void
+        // let groupcsv: neatCsv.Row[] = fs.readFile(appdir + 'groups.csv', 'utf8', async (err, data) => {
+            // if (err) {
+                // console.error(err);
+                // return [];
+            // }
+            // await neatCsv(data);
+        // });
+    
+        // (async () => {
+        //     groupcsv = await neatCsv(fs.readFile(appdir + "groups.csv", 'utf8'));
+        // })();
+    
+        // for (let i = 0; i < groupcsv.length; i++) {
+        //     groups.push(new Group((groupcsv[i][0] as unknown as number), groupcsv[i][2], groupcsv[i][3] == 1));
         // }
-    // })
-    // TODO figure out why this is returning void
-    // let groupcsv: neatCsv.Row[] = fs.readFile(appdir + 'groups.csv', 'utf8', async (err, data) => {
-        // if (err) {
-            // console.error(err);
-            // return [];
-        // }
-        // await neatCsv(data);
-    // });
-
-    // (async () => {
-    //     groupcsv = await neatCsv(fs.readFile(appdir + "groups.csv", 'utf8'));
-    // })();
-
-    // for (let i = 0; i < groupcsv.length; i++) {
-    //     groups.push(new Group((groupcsv[i][0] as unknown as number), groupcsv[i][2], groupcsv[i][3] == 1));
-    // }
-
-    //while there are more groups add to groups and groupsLeftOnServer
-    groups.forEach(group => {
-        if (!group.getDownloaded()) groupsLeftOnServer.push(group);
-    })
-
-    // download each groups' videos and delete from firebase
-	for (let i = 0; i < groupsLeftOnServer.length; i++) {
-		for (let j = 0; j < groupsLeftOnServer[i].getUsernames().length; j++) {
-			moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].getID(), groupsLeftOnServer[i].getUsernames()[j]);
+    
+        console.log("test01");
+        console.log("3"+groups);
+        //while there are more groups add to groups and groupsLeftOnServer
+        groups.forEach(group => {
+            console.log("test00")
+            console.log(group)
+            if (!group.getDownloaded()) groupsLeftOnServer.push(group);
+        })
+    
+        console.log("test3");
+    
+        // download each groups' videos and delete from firebase
+        for (let i = 0; i < groupsLeftOnServer.length; i++) {
+            for (let j = 0; j < groupsLeftOnServer[i].getUsernames().length; j++) {
+                moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].getID(), groupsLeftOnServer[i].getUsernames()[j]);
+            }
+            groupsLeftOnServer[i].setDownloaded(true);
+            groupsDownloaded.push(groupsLeftOnServer[i]);
+            groupsLeftOnServer.splice(i, 1);
+            while (true) {// REMOVE THIS ONCE IT GETS HERE!
+                // console.log("test4" + i);
+            }
         }
-        groupsLeftOnServer[i].setDownloaded(true);
-        groupsDownloaded.push(groupsLeftOnServer[i]);
-		groupsLeftOnServer.splice(i, 1);
-	}
-
-    // edit the next group in groupsDownloaded and move it to groupsAwaitingReturn
-    // edit(groupsDownloaded[0]);
-    groupsAwaitingReturn.push(groupsDownloaded[0]);
-    groupsDownloaded.splice(0, 1);
-
-    // check for signal and add to groupsRequested, ensure that group is in groupsAwaitingReturn
-
-
-    // upload groupsRequested
-    for (let i = 0; i < groupsRequested.length; i++) {
-        uploadCompletedVideo(groupsRequested[i].getID());
+        break;
+        // edit the next group in groupsDownloaded and move it to groupsAwaitingReturn
+        // edit(groupsDownloaded[0]);
+        groupsAwaitingReturn.push(groupsDownloaded[0]);
+        groupsDownloaded.splice(0, 1);
+    
+        // check for signal and add to groupsRequested, ensure that group is in groupsAwaitingReturn
+    
+    
+        // upload groupsRequested
+        for (let i = 0; i < groupsRequested.length; i++) {
+            uploadCompletedVideo(groupsRequested[i].getID());
+        }
+    
+        // check for signal from users that we can delete the video, and delete it
+        
+    
+        // wait before continuing the loop
+        delay(10000);
     }
-
-    // check for signal from users that we can delete the video, and delete it
-    
-    
-    // wait before continuing the loop
-    delay(10000);
 }
+
+run();

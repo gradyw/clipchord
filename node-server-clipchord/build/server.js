@@ -223,13 +223,18 @@ let x = 1;
 async function run() {
     let data;
     console.log("Testing");
-    dbRef.on("value", function (snapshot) {
-        console.log(snapshot.val());
-        data = snapshot.val();
-        console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
-    }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
+    await new Promise((resolve) => {
+        dbRef.on("value", function (snapshot) {
+            console.log(snapshot.val());
+            data = snapshot.val();
+            console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
+            resolve();
+        }, function (errorObject) {
+            console.log("The read failed: " + errorObject.code);
+        });
     });
+    console.log(data);
+    console.log(data['Groups']['A2A2A']['VideosComplete']);
     console.log("Finished");
     //     while (true) {
     //         // let groups: Group[] = [];

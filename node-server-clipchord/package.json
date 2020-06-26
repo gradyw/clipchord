@@ -28,7 +28,8 @@
     "express": "^4.17.1",
     "firebase-admin": "^8.10.0",
     "fluent-ffmpeg": "^2.1.2",
-    "neat-csv": "^5.2.0"
+    "neat-csv": "^5.2.0",
+    "systemjs": "^6.3.2"
   },
   "devDependencies": {
     "@types/node": "^13.11.1",

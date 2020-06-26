@@ -229,48 +229,45 @@ console.log("test1");
 // populateFromCSV();
 let x = 1;
 async function run() {
-    while (true) {
-        console.log("Testing");
-        // download any videos that have not yet been downloaded
-        await new Promise((resolve) => {
-            dbGroupsRef.orderByKey();
-            dbGroupsRef.once("value").then(function (snapshot) {
-                snapshot.forEach(function (allGroups) {
-                    let key = allGroups.key;
-                    allGroups.forEach(function (singleGroup) {
-                        let key2 = singleGroup.key;
-                        if (key2 == "users") {
-                            singleGroup.forEach(function (userKey) {
-                                let key3 = userKey.key;
-                                let downloaded = true;
-                                let videoComplete = false;
-                                userKey.forEach(function (userDownloaded) {
-                                    if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
-                                        downloaded = false;
-                                        console.log("Here" + downloaded);
-                                    }
-                                    if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == "True") {
-                                        videoComplete = true;
-                                    }
-                                });
-                                if (!downloaded && videoComplete) {
-                                    downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
-                                    dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
+    console.log("Testing");
+    // download any videos that have not yet been downloaded
+    await new Promise((resolve) => {
+        dbGroupsRef.orderByKey();
+        dbGroupsRef.once("value").then(function (snapshot) {
+            snapshot.forEach(function (allGroups) {
+                let key = allGroups.key;
+                allGroups.forEach(function (singleGroup) {
+                    let key2 = singleGroup.key;
+                    if (key2 == "users") {
+                        singleGroup.forEach(function (userKey) {
+                            let key3 = userKey.key;
+                            let downloaded = true;
+                            let videoComplete = false;
+                            userKey.forEach(function (userDownloaded) {
+                                if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
+                                    downloaded = false;
+                                    console.log("Here" + downloaded);
+                                }
+                                if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == "True") {
+                                    videoComplete = true;
                                 }
                             });
-                        }
-                    });
-                    return true;
+                            if (!downloaded && videoComplete) {
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
+                                dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
+                            }
+                        });
+                    }
                 });
-                resolve();
-            }, function (errorObject) {
-                console.log("The read failed: " + errorObject.code);
-                resolve();
+                return true;
             });
+            resolve();
+        }, function (errorObject) {
+            console.log("The read failed: " + errorObject.code);
+            resolve();
         });
-        console.log("Finished");
-        break;
-    }
+    });
+    console.log("Finished");
     //     while (true) {
     //         // let groups: Group[] = [];
     //         // let groupcsv: neatCsv.Row[] = [];

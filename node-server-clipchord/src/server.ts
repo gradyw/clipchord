@@ -8,6 +8,7 @@ export {}
 import csv from 'csv-parser';
 import fs from 'fs';
 import { Transform } from 'stream';
+import { type } from 'os';
 
 function myCSV(groupid: number, groupname: string, usernames: string[]) {
     
@@ -34,7 +35,7 @@ admin.initializeApp({
 let db = admin.database();
 let dbRef = db.ref("Data");
 // let dbUsersRef = db.ref("Users");
-// let dbGroupsRef = db.ref("Groups");
+let dbGroupsRef = db.ref("Data/Groups");
 
 // dbRef.once("value", function(snapshot: any) {
 //     console.log(snapshot.val());
@@ -43,38 +44,38 @@ let dbRef = db.ref("Data");
 
 let bucket = admin.storage().bucket();
 
-// class Group {
-//     private id: string;
-//     private userids: string[];
-//     private downloaded: boolean;
+class Group {
+    private id: string;
+    private userids: string[];
+    private downloaded: boolean;
 
-// 	constructor(id: string, usernames: string, downloaded: boolean) {
-//         this.id = id;
-//         this.userids = [];
-//         this.downloaded = downloaded;
-//         usernames = usernames.substring(1, usernames.length - 1);
-//         let nameslist: string[] = usernames.split(';');
-//         for (let i = 0; i < nameslist.length; i++) {
-//             this.usernames.push(nameslist[i]);
-//         }
-//     }
+	constructor(id: string, userids: string, downloaded: boolean) {
+        this.id = id;
+        this.userids = [];
+        this.downloaded = downloaded;
+        userids = userids.substring(1, userids.length - 1);
+        let nameslist: string[] = userids.split(';');
+        for (let i = 0; i < nameslist.length; i++) {
+            this.userids.push(nameslist[i]);
+        }
+    }
 
-//     getID() : string {
-//         return this.id; 
-//     }
+    getID() : string {
+        return this.id; 
+    }
 
-//     getUsernames() : string[] {
-//         return this.usernames;
-//     }
+    getUsernames() : string[] {
+        return this.userids;
+    }
 
-//     getDownloaded() : boolean {
-//         return this.downloaded;
-//     }
+    getDownloaded() : boolean {
+        return this.downloaded;
+    }
 
-//     setDownloaded(downloaded: boolean) : void {
-//         this.downloaded = downloaded;
-//     }
-// }
+    setDownloaded(downloaded: boolean) : void {
+        this.downloaded = downloaded;
+    }
+}
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -273,27 +274,35 @@ async function run() {
 
     while(true) {
 
-        let data: any;
-
         console.log("Testing");
 
-
         await new Promise((resolve) => {
-            dbRef.on("value", function(snapshot: any) {
-                console.log(snapshot.val());
-                data = snapshot.val();
-                console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
+            dbGroupsRef.orderByKey();
+
+            dbGroupsRef.once("value").then(function(snapshot: any) {
+                snapshot.forEach(function(allGroups: any){
+                    let key = allGroups.key;
+                    console.log("key" + key);
+                    allGroups.forEach(function(singleGroup: any) {
+                        let key2 = singleGroup.key;
+                        console.log("key2" + key2);
+                        if (key2 == "users") {
+                            singleGroup.forEach(function(userKey: any) {
+                                console.log(userKey.key)
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", 
+                                    "Groups/" + allGroups.key + "/" + userKey.key + ".mp4");
+                            })
+                        }
+                        
+                    });
+
+                    return true;
+                })
                 resolve();
             }, function(errorObject: any) {
                 console.log("The read failed: " + errorObject.code);
                 resolve();
             });
-        });
-        console.log(data);
-        console.log(data['Groups']['A2A2A']['VideosComplete']);
-
-        data['Groups'].array.forEach(element => {
-            
         });
 
 

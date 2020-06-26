@@ -18,39 +18,36 @@ admin.initializeApp({
 let db = admin.database();
 let dbRef = db.ref("Data");
 // let dbUsersRef = db.ref("Users");
-// let dbGroupsRef = db.ref("Groups");
+let dbGroupsRef = db.ref("Data/Groups");
 // dbRef.once("value", function(snapshot: any) {
 //     console.log(snapshot.val());
 //     console.log("Works");
 // });
 let bucket = admin.storage().bucket();
-// class Group {
-//     private id: string;
-//     private userids: string[];
-//     private downloaded: boolean;
-// 	constructor(id: string, usernames: string, downloaded: boolean) {
-//         this.id = id;
-//         this.userids = [];
-//         this.downloaded = downloaded;
-//         usernames = usernames.substring(1, usernames.length - 1);
-//         let nameslist: string[] = usernames.split(';');
-//         for (let i = 0; i < nameslist.length; i++) {
-//             this.usernames.push(nameslist[i]);
-//         }
-//     }
-//     getID() : string {
-//         return this.id; 
-//     }
-//     getUsernames() : string[] {
-//         return this.usernames;
-//     }
-//     getDownloaded() : boolean {
-//         return this.downloaded;
-//     }
-//     setDownloaded(downloaded: boolean) : void {
-//         this.downloaded = downloaded;
-//     }
-// }
+class Group {
+    constructor(id, userids, downloaded) {
+        this.id = id;
+        this.userids = [];
+        this.downloaded = downloaded;
+        userids = userids.substring(1, userids.length - 1);
+        let nameslist = userids.split(';');
+        for (let i = 0; i < nameslist.length; i++) {
+            this.userids.push(nameslist[i]);
+        }
+    }
+    getID() {
+        return this.id;
+    }
+    getUsernames() {
+        return this.userids;
+    }
+    getDownloaded() {
+        return this.downloaded;
+    }
+    setDownloaded(downloaded) {
+        this.downloaded = downloaded;
+    }
+}
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -222,22 +219,30 @@ console.log("test1");
 let x = 1;
 async function run() {
     while (true) {
-        let data;
         console.log("Testing");
         await new Promise((resolve) => {
-            dbRef.on("value", function (snapshot) {
-                console.log(snapshot.val());
-                data = snapshot.val();
-                console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
+            dbGroupsRef.orderByKey();
+            dbGroupsRef.once("value").then(function (snapshot) {
+                snapshot.forEach(function (allGroups) {
+                    let key = allGroups.key;
+                    console.log("key" + key);
+                    allGroups.forEach(function (singleGroup) {
+                        let key2 = singleGroup.key;
+                        console.log("key2" + key2);
+                        if (key2 == "users") {
+                            singleGroup.forEach(function (userKey) {
+                                console.log(userKey.key);
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key + "/" + userKey.key + ".mp4");
+                            });
+                        }
+                    });
+                    return true;
+                });
                 resolve();
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
                 resolve();
             });
-        });
-        console.log(data);
-        console.log(data['Groups']['A2A2A']['VideosComplete']);
-        data['Groups'].array.forEach(element => {
         });
         console.log("Finished");
         break;

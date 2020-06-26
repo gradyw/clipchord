@@ -3,6 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// import * as fs from 'fs';
+// import neatCsv = require('neat-csv');
+// import * as csv from 'csv';
+// const obj = csv();
 const fs_1 = __importDefault(require("fs"));
 function myCSV(groupid, groupname, usernames) {
 }
@@ -11,7 +15,7 @@ let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
-let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk-i4et0-50616b8a54.json");
+let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk-i4et0-b403d41571.json");
 let app = express();
 let PORT = 3000;
 admin.initializeApp({
@@ -233,13 +237,11 @@ async function run() {
             dbGroupsRef.once("value").then(function (snapshot) {
                 snapshot.forEach(function (allGroups) {
                     let key = allGroups.key;
-                    console.log("key" + key);
                     allGroups.forEach(function (singleGroup) {
                         let key2 = singleGroup.key;
-                        console.log("key2" + key2);
                         if (key2 == "users") {
                             singleGroup.forEach(function (userKey) {
-                                console.log(userKey.key);
+                                let key3 = userKey.key;
                                 let downloaded = true;
                                 let videoComplete = false;
                                 userKey.forEach(function (userDownloaded) {
@@ -251,11 +253,9 @@ async function run() {
                                         videoComplete = true;
                                     }
                                 });
-                                console.log("Downloaded" + downloaded);
-                                console.log("Complete" + videoComplete);
                                 if (!downloaded && videoComplete) {
                                     downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
-                                    dbGroupsRef.child(key + "/" + key2 + "/" + userKey.key + "/Downloaded").set("True");
+                                    dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
                                 }
                             });
                         }
@@ -330,4 +330,3 @@ async function run() {
     //     }
 }
 run();
-console.log("hi");

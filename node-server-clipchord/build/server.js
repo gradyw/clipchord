@@ -231,6 +231,7 @@ async function run() {
             resolve();
         }, function (errorObject) {
             console.log("The read failed: " + errorObject.code);
+            resolve();
         });
     });
     console.log(data);

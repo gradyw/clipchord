@@ -5,7 +5,6 @@ export {}
 // import * as csv from 'csv';
 // const obj = csv();
 
-import csv from 'csv-parser';
 import fs from 'fs';
 import { Transform } from 'stream';
 import { type } from 'os';

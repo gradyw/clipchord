@@ -271,25 +271,36 @@ let x = 1;
 
 async function run() {
 
-    let data: any;
+    while(true) {
 
-    console.log("Testing");
+        let data: any;
+
+        console.log("Testing");
 
 
-    await new Promise((resolve) => {
-        dbRef.on("value", function(snapshot: any) {
-            console.log(snapshot.val());
-            data = snapshot.val();
-            console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
-            resolve();
-        }, function(errorObject: any) {
-            console.log("The read failed: " + errorObject.code);
-            resolve();
+        await new Promise((resolve) => {
+            dbRef.on("value", function(snapshot: any) {
+                console.log(snapshot.val());
+                data = snapshot.val();
+                console.log(data['Groups']['A2A2A']['FinalVideoRequested']);
+                resolve();
+            }, function(errorObject: any) {
+                console.log("The read failed: " + errorObject.code);
+                resolve();
+            });
         });
-    });
-    console.log(data);
-    console.log(data['Groups']['A2A2A']['VideosComplete']);
-    console.log("Finished");
+        console.log(data);
+        console.log(data['Groups']['A2A2A']['VideosComplete']);
+
+        data['Groups'].array.forEach(element => {
+            
+        });
+
+
+
+        console.log("Finished");
+        break;
+    }
 //     while (true) {
 //         // let groups: Group[] = [];
 //         // let groupcsv: neatCsv.Row[] = [];

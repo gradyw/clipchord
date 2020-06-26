@@ -227,6 +227,7 @@ let x = 1;
 async function run() {
     while (true) {
         console.log("Testing");
+        // download any videos that have not yet been downloaded
         await new Promise((resolve) => {
             dbGroupsRef.orderByKey();
             dbGroupsRef.once("value").then(function (snapshot) {
@@ -239,14 +240,23 @@ async function run() {
                         if (key2 == "users") {
                             singleGroup.forEach(function (userKey) {
                                 console.log(userKey.key);
+                                let downloaded = true;
+                                let videoComplete = false;
                                 userKey.forEach(function (userDownloaded) {
-                                    console.log(userDownloaded.key);
-                                    console.log(userDownloaded.val());
                                     if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
-                                        downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
-                                        dbGroupsRef.child(key + "/" + key2 + "/" + userKey.key + "/" + userDownloaded.key).set("True");
+                                        downloaded = false;
+                                        console.log("Here" + downloaded);
+                                    }
+                                    if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == "True") {
+                                        videoComplete = true;
                                     }
                                 });
+                                console.log("Downloaded" + downloaded);
+                                console.log("Complete" + videoComplete);
+                                if (!downloaded && videoComplete) {
+                                    downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
+                                    dbGroupsRef.child(key + "/" + key2 + "/" + userKey.key + "/Downloaded").set("True");
+                                }
                             });
                         }
                     });

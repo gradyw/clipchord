@@ -293,8 +293,15 @@ async function run() {
                         if (key2 == "users") {
                             singleGroup.forEach(function(userKey: any) {
                                 console.log(userKey.key)
-                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", 
-                                    "Groups/" + allGroups.key, userKey.key + ".mp4");
+                                userKey.forEach(function(userDownloaded: any) {
+                                    console.log(userDownloaded.key)
+                                    console.log(userDownloaded.val())
+                                    if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
+                                        downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", 
+                                            "Groups/" + allGroups.key, userKey.key + ".mp4");
+                                        dbGroupsRef.child(key + "/" + key2 + "/" + userKey.key + "/" + userDownloaded.key).set("True");
+                                    }
+                                })
                             })
                         }
                         

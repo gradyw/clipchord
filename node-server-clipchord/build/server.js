@@ -15,7 +15,7 @@ let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
-let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk-i4et0-b403d41571.json");
+let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk.json");
 let app = express();
 let PORT = 3000;
 admin.initializeApp({

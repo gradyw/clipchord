@@ -82,16 +82,20 @@ function delay(ms: number) {
 }
 
 async function moveUserVideosFirebaseToLocal(groupid: number, username: string) {
-    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid + "/" + username + ".mp4");
+    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
 
 }
 
 // TODO find a way to specify return type as bucket file
-async function downloadFile(name: string, destname: string) {
+async function downloadFile(name: string, destDirName: string, destFileName: string) {
     const options = {
         // The path to which the file should be downloaded, e.g. "./file.txt"
-        destination: appdir + destname
+        destination: appdir + destDirName + "/" + destFileName
     };
+
+    if (!fs.existsSync(appdir + destDirName)) {
+        fs.mkdirSync(appdir + destDirName);
+    }
 
     // Downloads the file
     await bucket
@@ -105,9 +109,9 @@ async function downloadFile(name: string, destname: string) {
     return bucket.file(name);
 }
 
-async function downloadFileAndDelete(name: string, destname: string) {
-    console.log("dest" + name + destname);
-    const downloadedFile = downloadFile(name, destname);
+async function downloadFileAndDelete(name: string, destDirName: string, destFileName: string) {
+    console.log("dest" + name + destDirName);
+    const downloadedFile = downloadFile(name, destDirName, destFileName);
     (await downloadedFile).delete();
 }
 
@@ -290,7 +294,7 @@ async function run() {
                             singleGroup.forEach(function(userKey: any) {
                                 console.log(userKey.key)
                                 downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", 
-                                    "Groups/" + allGroups.key + "/" + userKey.key + ".mp4");
+                                    "Groups/" + allGroups.key, userKey.key + ".mp4");
                             })
                         }
                         

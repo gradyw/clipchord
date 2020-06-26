@@ -1,5 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
 function myCSV(groupid, groupname, usernames) {
 }
 let express = require('express');
@@ -52,14 +56,17 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 async function moveUserVideosFirebaseToLocal(groupid, username) {
-    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid + "/" + username + ".mp4");
+    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
 }
 // TODO find a way to specify return type as bucket file
-async function downloadFile(name, destname) {
+async function downloadFile(name, destDirName, destFileName) {
     const options = {
         // The path to which the file should be downloaded, e.g. "./file.txt"
-        destination: appdir + destname
+        destination: appdir + destDirName + "/" + destFileName
     };
+    if (!fs_1.default.existsSync(appdir + destDirName)) {
+        fs_1.default.mkdirSync(appdir + destDirName);
+    }
     // Downloads the file
     await bucket
         .file(name)
@@ -67,9 +74,9 @@ async function downloadFile(name, destname) {
     console.log('success');
     return bucket.file(name);
 }
-async function downloadFileAndDelete(name, destname) {
-    console.log("dest" + name + destname);
-    const downloadedFile = downloadFile(name, destname);
+async function downloadFileAndDelete(name, destDirName, destFileName) {
+    console.log("dest" + name + destDirName);
+    const downloadedFile = downloadFile(name, destDirName, destFileName);
     (await downloadedFile).delete();
 }
 async function uploadCompletedVideo(groupid) {
@@ -232,7 +239,7 @@ async function run() {
                         if (key2 == "users") {
                             singleGroup.forEach(function (userKey) {
                                 console.log(userKey.key);
-                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key + "/" + userKey.key + ".mp4");
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key, userKey.key + ".mp4");
                             });
                         }
                     });

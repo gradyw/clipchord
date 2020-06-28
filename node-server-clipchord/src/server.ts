@@ -1,4 +1,4 @@
-export {}
+export { }
 // import * as fs from 'fs';
 // import neatCsv = require('neat-csv');
 
@@ -8,9 +8,10 @@ export {}
 import fs from 'fs';
 import { Transform } from 'stream';
 import { type } from 'os';
+import { resolve } from 'path';
 
 function myCSV(groupid: number, groupname: string, usernames: string[]) {
-    
+
 }
 
 let express = require('express');
@@ -26,14 +27,65 @@ let app = express();
 let PORT = 3000;
 
 admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount),
     storageBucket: "clipchord.appspot.com",
     databaseURL: "https://clipchord.firebaseio.com"
 });
 
+let auth = admin.auth();
+
+class User {
+    private uid: string;
+    private name: string;
+    private email: string;
+
+    constructor(uid: string, name: string, email: string) {
+        this.uid = uid;
+        this.name = name;
+        this.email = email;
+    }
+
+    getUid(): string {
+        return this.uid;
+    }
+
+    getName(): string {
+        return this.name;
+    }
+
+    getEmail(): string {
+        return this.email;
+    }
+}
+
+
+let allUsers: User[] = [];
+
+async function saveUsers(nextPageToken?: any) {
+
+    await new Promise((resolve, reject) => {
+        auth.listUsers(1000, nextPageToken)
+            .then(function (listUserResult: any) {
+                listUserResult.users.forEach(function (userRecord: any) {
+                    console.log(userRecord.uid);
+                    allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email));
+                });
+                if (listUserResult.pageToken) {
+                    saveUsers(listUserResult.pageToken)
+                }
+                resolve();
+            })
+            .catch(function (error: any) {
+                console.log("Error retrieving users: ", error)
+                reject()
+            });
+    });
+
+
+}
+
 let db = admin.database();
-let dbRef = db.ref("Data");
-// let dbUsersRef = db.ref("Users");
+let dbUsersRef = db.ref("Data/Users");
 let dbGroupsRef = db.ref("Data/Groups");
 
 // dbRef.once("value", function(snapshot: any) {
@@ -48,7 +100,7 @@ class Group {
     private userids: string[];
     private downloaded: boolean;
 
-	constructor(id: string, userids: string, downloaded: boolean) {
+    constructor(id: string, userids: string, downloaded: boolean) {
         this.id = id;
         this.userids = [];
         this.downloaded = downloaded;
@@ -59,30 +111,38 @@ class Group {
         }
     }
 
-    getID() : string {
-        return this.id; 
+    getID(): string {
+        return this.id;
     }
 
-    getUsernames() : string[] {
+    getUsernames(): string[] {
         return this.userids;
     }
 
-    getDownloaded() : boolean {
+    getDownloaded(): boolean {
         return this.downloaded;
     }
 
-    setDownloaded(downloaded: boolean) : void {
+    setDownloaded(downloaded: boolean): void {
         this.downloaded = downloaded;
     }
 }
 
-function delay(ms: number) {
+async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function moveUserVideosFirebaseToLocal(groupid: number, username: string) {
     downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
 
+}
+
+async function createDatabaseUserDirectory(user: User) {
+    let dir = dbUsersRef.child(user.getUid());
+    dir.set({
+        name: user.getName(),
+        email: user.getEmail()
+    })
 }
 
 // TODO find a way to specify return type as bucket file
@@ -262,7 +322,7 @@ console.log("test1")
 //             .on('data', (data) => {
 //                 groups.push(new Group(data['ID'], data['GROUPNAME'], data['USERNAMES'], data['DOWNLOADED'] == 1));
 //                 console.log(groups);
-    
+
 //             })
 //             .on('end', () => {
 //                 console.log(groups);
@@ -277,21 +337,36 @@ async function run() {
 
     console.log("Testing");
 
+    // create a database directory for any users not in existence
+    
+    await new Promise((resolve) => {
+        let prevAllUsers: User[] = Object.assign([], allUsers);
+        saveUsers()
+        .then(function () {
+            console.log(allUsers);
+            for (let i = prevAllUsers.length; i < allUsers.length; i++) {
+                createDatabaseUserDirectory(allUsers[i])
+            }
+        });
+        resolve();
+    });
+
+
     // download any videos that have not yet been downloaded
     await new Promise((resolve) => {
         dbGroupsRef.orderByKey();
 
-        dbGroupsRef.once("value").then(function(snapshot: any) {
-            snapshot.forEach(function(allGroups: any){
+        dbGroupsRef.once("value").then(function (snapshot: any) {
+            snapshot.forEach(function (allGroups: any) {
                 let key = allGroups.key;
-                allGroups.forEach(function(singleGroup: any) {
+                allGroups.forEach(function (singleGroup: any) {
                     let key2 = singleGroup.key;
                     if (key2 == "users") {
-                        singleGroup.forEach(function(userKey: any) {
+                        singleGroup.forEach(function (userKey: any) {
                             let key3 = userKey.key
                             let downloaded = true
                             let videoComplete = false
-                            userKey.forEach(function(userDownloaded: any) {
+                            userKey.forEach(function (userDownloaded: any) {
                                 if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
                                     downloaded = false;
                                 }
@@ -300,19 +375,19 @@ async function run() {
                                 }
                             })
                             if (!downloaded && videoComplete) {
-                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + "/" + userKey.key + ".mp4", 
-                                        "Groups/" + allGroups.key + "/" + userKey.key, userKey.key + ".mp4");
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + "/" + userKey.key + ".mp4",
+                                    "Groups/" + allGroups.key + "/" + userKey.key, userKey.key + ".mp4");
                                 dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
                             }
                         })
                     }
-                    
+
                 });
 
                 return true;
             })
             resolve();
-        }, function(errorObject: any) {
+        }, function (errorObject: any) {
             console.log("The read failed: " + errorObject.code);
             resolve();
         });
@@ -321,81 +396,81 @@ async function run() {
 
 
     console.log("Finished");
-//     while (true) {
-//         // let groups: Group[] = [];
-//         // let groupcsv: neatCsv.Row[] = [];
+    //     while (true) {
+    //         // let groups: Group[] = [];
+    //         // let groupcsv: neatCsv.Row[] = [];
 
-        
 
-//         // dbRef.on("value", function(snapshot: any) {
-//         //     console.log(snapshot.val());
-//         // }, function(errorObject: any) {
-//         //     console.log("The read failed: " + errorObject.code);
-//         // });
 
-        
+    //         // dbRef.on("value", function(snapshot: any) {
+    //         //     console.log(snapshot.val());
+    //         // }, function(errorObject: any) {
+    //         //     console.log("The read failed: " + errorObject.code);
+    //         // });
 
-//         break;
-// /*        
-//         console.log("test2");
-//         console.log(appdir+'groups.csv');
-        
-        
-//         await new Promise((resolve) => fs.createReadStream(appdir + 'groups.csv')
-//             .pipe(csv())
-//             .on('data', (data) => {
-//                 groups.push(new Group(data['ID'], data['GROUPNAME'], data['USERNAMES'], data['DOWNLOADED'] == 1));
-//                 console.log(groups);
-    
-//             })
-//             .on('end', () => {
-//                 console.log(groups);
-//                 resolve()
-//             }));
-    
-//         console.log("test01");
-//         console.log("3"+groups);
-//         //while there are more groups add to groups and groupsLeftOnServer
-//         groups.forEach(group => {
-//             console.log("test00")
-//             console.log(group)
-//             if (!group.getDownloaded()) groupsLeftOnServer.push(group);
-//         })
-    
-//         console.log("test3");
-    
-//         // download each groups' videos and delete from firebase
-//         for (let i = 0; i < groupsLeftOnServer.length; i++) {
-//             for (let j = 0; j < groupsLeftOnServer[i].getUsernames().length; j++) {
-//                 moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].getID(), groupsLeftOnServer[i].getUsernames()[j]);
-//             }
-//             groupsLeftOnServer[i].setDownloaded(true);
-//             groupsDownloaded.push(groupsLeftOnServer[i]);
-//             groupsLeftOnServer.splice(i, 1);
-//             while (true) {// REMOVE THIS ONCE IT GETS HERE!
-//                 // console.log("test4" + i);
-//             }
-//         }
-//         break;*/
-//         // edit the next group in groupsDownloaded and move it to groupsAwaitingReturn, send signal that it's ready
-//         // edit(groupsDownloaded[0]);
-//         // groupsAwaitingReturn.push(groupsDownloaded[0]);
-//         // groupsDownloaded.splice(0, 1);
-    
-//         // check for signal and add to groupsRequested, ensure that group is in groupsAwaitingReturn
-    
-    
-//         // upload groupsRequested
-//         // for (let i = 0; i < groupsRequested.length; i++) {
-//             // uploadCompletedVideo(groupsRequested[i].getID());
-//         // }
-    
-//         // check for signal from users that we can delete the video, and delete it
-        
-    
-//         // wait before continuing the loop
-//         delay(10000);
-//     }
+
+
+    //         break;
+    // /*        
+    //         console.log("test2");
+    //         console.log(appdir+'groups.csv');
+
+
+    //         await new Promise((resolve) => fs.createReadStream(appdir + 'groups.csv')
+    //             .pipe(csv())
+    //             .on('data', (data) => {
+    //                 groups.push(new Group(data['ID'], data['GROUPNAME'], data['USERNAMES'], data['DOWNLOADED'] == 1));
+    //                 console.log(groups);
+
+    //             })
+    //             .on('end', () => {
+    //                 console.log(groups);
+    //                 resolve()
+    //             }));
+
+    //         console.log("test01");
+    //         console.log("3"+groups);
+    //         //while there are more groups add to groups and groupsLeftOnServer
+    //         groups.forEach(group => {
+    //             console.log("test00")
+    //             console.log(group)
+    //             if (!group.getDownloaded()) groupsLeftOnServer.push(group);
+    //         })
+
+    //         console.log("test3");
+
+    //         // download each groups' videos and delete from firebase
+    //         for (let i = 0; i < groupsLeftOnServer.length; i++) {
+    //             for (let j = 0; j < groupsLeftOnServer[i].getUsernames().length; j++) {
+    //                 moveUserVideosFirebaseToLocal(groupsLeftOnServer[i].getID(), groupsLeftOnServer[i].getUsernames()[j]);
+    //             }
+    //             groupsLeftOnServer[i].setDownloaded(true);
+    //             groupsDownloaded.push(groupsLeftOnServer[i]);
+    //             groupsLeftOnServer.splice(i, 1);
+    //             while (true) {// REMOVE THIS ONCE IT GETS HERE!
+    //                 // console.log("test4" + i);
+    //             }
+    //         }
+    //         break;*/
+    //         // edit the next group in groupsDownloaded and move it to groupsAwaitingReturn, send signal that it's ready
+    //         // edit(groupsDownloaded[0]);
+    //         // groupsAwaitingReturn.push(groupsDownloaded[0]);
+    //         // groupsDownloaded.splice(0, 1);
+
+    //         // check for signal and add to groupsRequested, ensure that group is in groupsAwaitingReturn
+
+
+    //         // upload groupsRequested
+    //         // for (let i = 0; i < groupsRequested.length; i++) {
+    //             // uploadCompletedVideo(groupsRequested[i].getID());
+    //         // }
+
+    //         // check for signal from users that we can delete the video, and delete it
+
+
+    //         // wait before continuing the loop
+    //         delay(10000);
+    //     }
 }
 
 run();

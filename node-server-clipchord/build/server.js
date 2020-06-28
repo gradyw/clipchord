@@ -23,9 +23,45 @@ admin.initializeApp({
     storageBucket: "clipchord.appspot.com",
     databaseURL: "https://clipchord.firebaseio.com"
 });
+let auth = admin.auth();
+class User {
+    constructor(uid, name, email) {
+        this.uid = uid;
+        this.name = name;
+        this.email = email;
+    }
+    getUid() {
+        return this.uid;
+    }
+    getName() {
+        return this.name;
+    }
+    getEmail() {
+        return this.email;
+    }
+}
+let allUsers = [];
+async function saveUsers(nextPageToken) {
+    await new Promise((resolve, reject) => {
+        auth.listUsers(1000, nextPageToken)
+            .then(function (listUserResult) {
+            listUserResult.users.forEach(function (userRecord) {
+                console.log(userRecord.uid);
+                allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email));
+            });
+            if (listUserResult.pageToken) {
+                saveUsers(listUserResult.pageToken);
+            }
+            resolve();
+        })
+            .catch(function (error) {
+            console.log("Error retrieving users: ", error);
+            reject();
+        });
+    });
+}
 let db = admin.database();
-let dbRef = db.ref("Data");
-// let dbUsersRef = db.ref("Users");
+let dbUsersRef = db.ref("Data/Users");
 let dbGroupsRef = db.ref("Data/Groups");
 // dbRef.once("value", function(snapshot: any) {
 //     console.log(snapshot.val());
@@ -56,11 +92,18 @@ class Group {
         this.downloaded = downloaded;
     }
 }
-function delay(ms) {
+async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 async function moveUserVideosFirebaseToLocal(groupid, username) {
     downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
+}
+async function createDatabaseUserDirectory(user) {
+    let dir = dbUsersRef.child(user.getUid());
+    dir.set({
+        name: user.getName(),
+        email: user.getEmail()
+    });
 }
 // TODO find a way to specify return type as bucket file
 async function downloadFile(name, destDirName, destFileName) {
@@ -230,6 +273,18 @@ console.log("test1");
 let x = 1;
 async function run() {
     console.log("Testing");
+    // create a database directory for any users not in existence
+    await new Promise((resolve) => {
+        let prevAllUsers = Object.assign([], allUsers);
+        saveUsers()
+            .then(function () {
+            console.log(allUsers);
+            for (let i = prevAllUsers.length; i < allUsers.length; i++) {
+                createDatabaseUserDirectory(allUsers[i]);
+            }
+        });
+        resolve();
+    });
     // download any videos that have not yet been downloaded
     await new Promise((resolve) => {
         dbGroupsRef.orderByKey();

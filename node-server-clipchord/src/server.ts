@@ -294,15 +294,14 @@ async function run() {
                             userKey.forEach(function(userDownloaded: any) {
                                 if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
                                     downloaded = false;
-                                    console.log("Here" + downloaded)
                                 }
                                 if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == "True") {
                                     videoComplete = true;
                                 }
                             })
                             if (!downloaded && videoComplete) {
-                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + ".mp4", 
-                                        "Groups/" + allGroups.key, userKey.key + ".mp4");
+                                downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + "/" + userKey.key + ".mp4", 
+                                        "Groups/" + allGroups.key + "/" + userKey.key, userKey.key + ".mp4");
                                 dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
                             }
                         })

@@ -291,13 +291,16 @@ async function addUserToNextGroup(user) {
                 console.log("here");
                 console.log(userProfile.val() + "/users/" + user.getUid());
                 let groupId = userProfile.val();
-                let groupsRef = dbGroupsRef.child(groupId + "/users/" + user.getUid());
-                groupsRef.set({
+                let groupUserRef = dbGroupsRef.child(groupId + "/users/" + user.getUid());
+                groupUserRef.set({
                     Downloaded: "False",
-                    VideoComplete: "False"
+                    VideoComplete: "False",
+                    FinalVideoRequested: "False"
                 });
+                dbGroupsRef.child(groupId + "/FinalVideoComplete").set("False");
+                dbUsersRef.child(user.getUid() + "/nextGroup").set("");
                 bucket.upload(appdir + "/sample.txt", {
-                    destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt"
+                    destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt" // upload an empty file to create the directory
                 });
             }
         });

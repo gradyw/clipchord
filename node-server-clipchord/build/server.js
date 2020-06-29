@@ -287,17 +287,17 @@ async function addUserToNextGroup(user) {
     userRef.once("value").then(function (snapshot) {
         snapshot.forEach(function (userProfile) {
             console.log(userProfile.key);
-            if (userProfile.key === "nextGroup") {
+            if (userProfile.key === "nextGroup" && userProfile.val() != "") {
                 console.log("here");
                 console.log(userProfile.val() + "/users/" + user.getUid());
                 let groupId = userProfile.val();
                 let groupUserRef = dbGroupsRef.child(groupId + "/users/" + user.getUid());
                 groupUserRef.set({
-                    Downloaded: "False",
-                    VideoComplete: "False",
-                    FinalVideoRequested: "False"
+                    Downloaded: false,
+                    VideoComplete: false,
+                    FinalVideoRequested: false
                 });
-                dbGroupsRef.child(groupId + "/FinalVideoComplete").set("False");
+                dbGroupsRef.child(groupId + "/FinalVideoComplete").set(false);
                 dbUsersRef.child(user.getUid() + "/nextGroup").set("");
                 bucket.upload(appdir + "/sample.txt", {
                     destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt" // upload an empty file to create the directory
@@ -338,16 +338,16 @@ async function run() {
                             let downloaded = true;
                             let videoComplete = false;
                             userKey.forEach(function (userDownloaded) {
-                                if (userDownloaded.key == "Downloaded" && userDownloaded.val() == "False") {
+                                if (userDownloaded.key == "Downloaded" && userDownloaded.val() == false) {
                                     downloaded = false;
                                 }
-                                if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == "True") {
+                                if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == true) {
                                     videoComplete = true;
                                 }
                             });
                             if (!downloaded && videoComplete) {
                                 downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + "/" + userKey.key + ".mp4", "Groups/" + allGroups.key + "/" + userKey.key, userKey.key + ".mp4");
-                                dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set("True");
+                                dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set(true);
                             }
                         });
                     }

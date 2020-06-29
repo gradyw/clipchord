@@ -25,10 +25,11 @@ admin.initializeApp({
 });
 let auth = admin.auth();
 class User {
-    constructor(uid, name, email) {
+    constructor(uid, name, email, nextGroup) {
         this.uid = uid;
         this.name = name;
         this.email = email;
+        this.nextGroup = nextGroup;
     }
     getUid() {
         return this.uid;
@@ -39,6 +40,12 @@ class User {
     getEmail() {
         return this.email;
     }
+    getNextGroup() {
+        return this.nextGroup;
+    }
+    setNextGroup(nextGroup) {
+        this.nextGroup = nextGroup;
+    }
 }
 let allUsers = [];
 async function saveUsers(nextPageToken) {
@@ -47,7 +54,7 @@ async function saveUsers(nextPageToken) {
             .then(function (listUserResult) {
             listUserResult.users.forEach(function (userRecord) {
                 console.log(userRecord.uid);
-                allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email));
+                allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email, ""));
             });
             if (listUserResult.pageToken) {
                 saveUsers(listUserResult.pageToken);
@@ -98,12 +105,16 @@ async function delay(ms) {
 async function moveUserVideosFirebaseToLocal(groupid, username) {
     downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
 }
-async function createDatabaseUserDirectory(user) {
-    let dir = dbUsersRef.child(user.getUid());
-    dir.set({
-        name: user.getName(),
-        email: user.getEmail()
+function setNextGroup(user) {
+    dbUsersRef.child(user.getUid() + "/nextGroup").once("value").then(function (snapshot) {
+        user.setNextGroup(snapshot.val());
     });
+}
+async function createDatabaseUserDirectory(user) {
+    let dir = dbUsersRef.child(user.getUid() + "/name");
+    dir.set(user.getName());
+    dir = dbUsersRef.child(user.getUid() + "/email");
+    dir.set(user.getEmail());
 }
 // TODO find a way to specify return type as bucket file
 async function downloadFile(name, destDirName, destFileName) {
@@ -127,7 +138,7 @@ async function downloadFileAndDelete(name, destDirName, destFileName) {
     (await downloadedFile).delete();
 }
 async function uploadCompletedVideo(groupid) {
-    bucket.upload(appdir + "/" + groupid + "final.mp4", {
+    bucket.upload(appdir + "/Groups/" + groupid + "final.mp4", {
         destination: "Groups/" + groupid + "/" + "final.mp4"
     });
 }
@@ -271,17 +282,42 @@ console.log("test1");
 // }
 // populateFromCSV();
 let x = 1;
+async function addUserToNextGroup(user) {
+    let userRef = dbUsersRef.child(user.getUid());
+    userRef.once("value").then(function (snapshot) {
+        snapshot.forEach(function (userProfile) {
+            console.log(userProfile.key);
+            if (userProfile.key === "nextGroup") {
+                console.log("here");
+                console.log(userProfile.val() + "/users/" + user.getUid());
+                let groupId = userProfile.val();
+                let groupsRef = dbGroupsRef.child(groupId + "/users/" + user.getUid());
+                groupsRef.set({
+                    Downloaded: "False",
+                    VideoComplete: "False"
+                });
+                bucket.upload(appdir + "/sample.txt", {
+                    destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt"
+                });
+            }
+        });
+    });
+}
 async function run() {
     console.log("Testing");
-    // create a database directory for any users not in existence
+    // create a database directory for any new users
     await new Promise((resolve) => {
         let prevAllUsers = Object.assign([], allUsers);
         saveUsers()
             .then(function () {
-            console.log(allUsers);
             for (let i = prevAllUsers.length; i < allUsers.length; i++) {
                 createDatabaseUserDirectory(allUsers[i]);
             }
+        }).then(function () {
+            allUsers.forEach(function (user) {
+                console.log(user.getName());
+                addUserToNextGroup(user);
+            });
         });
         resolve();
     });

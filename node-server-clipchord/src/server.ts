@@ -38,11 +38,13 @@ class User {
     private uid: string;
     private name: string;
     private email: string;
+    private nextGroup: string;
 
-    constructor(uid: string, name: string, email: string) {
+    constructor(uid: string, name: string, email: string, nextGroup: string) {
         this.uid = uid;
         this.name = name;
         this.email = email;
+        this.nextGroup = nextGroup;
     }
 
     getUid(): string {
@@ -56,6 +58,14 @@ class User {
     getEmail(): string {
         return this.email;
     }
+
+    getNextGroup(): string {
+        return this.nextGroup;
+    }
+
+    setNextGroup(nextGroup: string): void {
+        this.nextGroup = nextGroup;
+    }
 }
 
 
@@ -68,7 +78,7 @@ async function saveUsers(nextPageToken?: any) {
             .then(function (listUserResult: any) {
                 listUserResult.users.forEach(function (userRecord: any) {
                     console.log(userRecord.uid);
-                    allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email));
+                    allUsers.push(new User(userRecord.uid, userRecord.displayName, userRecord.email, ""));
                 });
                 if (listUserResult.pageToken) {
                     saveUsers(listUserResult.pageToken)
@@ -137,12 +147,17 @@ async function moveUserVideosFirebaseToLocal(groupid: number, username: string) 
 
 }
 
+function setNextGroup(user: User) {
+    dbUsersRef.child(user.getUid()+ "/nextGroup").once("value").then(function (snapshot: any) {
+        user.setNextGroup(snapshot.val() as string)
+    });    
+}
+
 async function createDatabaseUserDirectory(user: User) {
-    let dir = dbUsersRef.child(user.getUid());
-    dir.set({
-        name: user.getName(),
-        email: user.getEmail()
-    })
+    let dir = dbUsersRef.child(user.getUid() + "/name");
+    dir.set(user.getName());
+    dir = dbUsersRef.child(user.getUid() + "/email");
+    dir.set(user.getEmail());
 }
 
 // TODO find a way to specify return type as bucket file
@@ -175,7 +190,7 @@ async function downloadFileAndDelete(name: string, destDirName: string, destFile
 }
 
 async function uploadCompletedVideo(groupid: number) {
-    bucket.upload(appdir + "/" + groupid + "final.mp4", {
+    bucket.upload(appdir + "/Groups/" + groupid + "final.mp4", {
         destination: "Groups/" + groupid + "/" + "final.mp4"
     });
 }
@@ -333,21 +348,47 @@ console.log("test1")
 
 let x = 1;
 
+
+async function addUserToNextGroup(user: User) {
+    let userRef = dbUsersRef.child(user.getUid());
+    userRef.once("value").then(function (snapshot: any) {
+        snapshot.forEach(function (userProfile: any) {
+            console.log(userProfile.key)
+            if (userProfile.key === "nextGroup") {
+                console.log("here")
+                console.log(userProfile.val() + "/users/" + user.getUid())
+                let groupId = userProfile.val()
+                let groupsRef = dbGroupsRef.child(groupId + "/users/" + user.getUid())
+                groupsRef.set({
+                    Downloaded: "False",
+                    VideoComplete: "False"
+                });
+                bucket.upload(appdir + "/sample.txt", {
+                    destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt" // upload an empty file to create the directory
+                });
+            }
+        })
+    })
+}
+
 async function run() {
 
     console.log("Testing");
 
-    // create a database directory for any users not in existence
-    
+    // create a database directory for any new users
     await new Promise((resolve) => {
         let prevAllUsers: User[] = Object.assign([], allUsers);
         saveUsers()
-        .then(function () {
-            console.log(allUsers);
-            for (let i = prevAllUsers.length; i < allUsers.length; i++) {
-                createDatabaseUserDirectory(allUsers[i])
-            }
-        });
+            .then(function () {
+                for (let i = prevAllUsers.length; i < allUsers.length; i++) {
+                    createDatabaseUserDirectory(allUsers[i])
+                }
+            }).then(function () {// check for any new group the user is in
+                allUsers.forEach(function (user: User) {
+                    console.log(user.getName())
+                    addUserToNextGroup(user)
+                });
+            })
         resolve();
     });
 
@@ -473,4 +514,4 @@ async function run() {
     //     }
 }
 
-run();
+run()

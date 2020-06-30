@@ -11,6 +11,7 @@ import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -22,15 +23,20 @@ public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 123;
 
     Button signInButton;
-    static FirebaseUser user;
+    private static FirebaseUser user;
+    private static String uid;
 
     public static StorageReference getStorageRef() {
         return storageRef;
     }
 
+    public static FirebaseDatabase getDatabase() {
+        return database;
+    }
+
     private static FirebaseStorage storage = FirebaseStorage.getInstance();
     private static StorageReference storageRef = storage.getReference();
-
+    private static FirebaseDatabase database = FirebaseDatabase.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +66,16 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 user = FirebaseAuth.getInstance().getCurrentUser();
                 Log.d("Auth", "Sign In Succeeded");
+                uid = user.getUid();
                 System.out.println(user.getEmail());
                 startActivity(new Intent(this, UploadTestActivity.class));
             } else {
                 Log.d("Auth", "Sign In Failed");
             }
         }
+    }
+
+    static String getUid() {
+        return uid;
     }
 }

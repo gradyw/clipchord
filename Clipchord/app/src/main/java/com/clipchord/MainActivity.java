@@ -11,7 +11,6 @@ import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -30,13 +29,9 @@ public class MainActivity extends AppCompatActivity {
         return storageRef;
     }
 
-    public static FirebaseDatabase getDatabase() {
-        return database;
-    }
-
     private static FirebaseStorage storage = FirebaseStorage.getInstance();
     private static StorageReference storageRef = storage.getReference();
-    private static FirebaseDatabase database = FirebaseDatabase.getInstance();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +70,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private static void updateUser() {
+        user = FirebaseAuth.getInstance().getCurrentUser();
+        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+    }
+
     static String getUid() {
+        updateUser();
         return uid;
     }
 }

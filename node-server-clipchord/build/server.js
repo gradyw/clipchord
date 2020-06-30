@@ -14,7 +14,7 @@ let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
 var data = fs_1.default.readFileSync('admin.txt');
-let serviceAccount = require(homedir + data.toString());
+let serviceAccount = require(data.toString());
 let app = express();
 let PORT = 3000;
 admin.initializeApp({

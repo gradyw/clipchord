@@ -281,7 +281,30 @@ console.log("test1");
 //     });
 // }
 // populateFromCSV();
-let x = 1;
+function generateNextGroupID() {
+    let length = 6;
+    let chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    while (true) {
+        result = '';
+        for (let i = length; i > 0; --i)
+            result += chars[Math.floor(Math.random() * chars.length)];
+        let matches = false;
+        dbGroupsRef.once("value").then(function (snapshot) {
+            snapshot.forEach(function (group) {
+                console.log(group.key);
+                if (group.key === result) {
+                    matches = true;
+                }
+            });
+        });
+        if (!matches)
+            break;
+    }
+    console.log(result);
+    let nextGroupRef = db.ref("Data");
+    nextGroupRef.child("NextGroupID").set(result);
+}
 async function addUserToNextGroup(user) {
     let userRef = dbUsersRef.child(user.getUid());
     userRef.once("value").then(function (snapshot) {
@@ -299,6 +322,7 @@ async function addUserToNextGroup(user) {
                 });
                 dbGroupsRef.child(groupId + "/FinalVideoComplete").set(false);
                 dbUsersRef.child(user.getUid() + "/nextGroup").set("");
+                generateNextGroupID();
                 bucket.upload(appdir + "/sample.txt", {
                     destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt" // upload an empty file to create the directory
                 });

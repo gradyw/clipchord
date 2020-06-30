@@ -9,6 +9,7 @@ import fs from 'fs';
 import { Transform } from 'stream';
 import { type } from 'os';
 import { resolve } from 'path';
+import { group } from 'console';
 
 function myCSV(groupid: number, groupname: string, usernames: string[]) {
 
@@ -346,7 +347,29 @@ console.log("test1")
 
 // populateFromCSV();
 
-let x = 1;
+function generateNextGroupID(): void {
+    let length: number = 6
+    let chars: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    let result: string = ''
+    while (true) {
+        result = ''
+        for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)]
+        let matches = false
+        dbGroupsRef.once("value").then(function (snapshot: any) {
+            snapshot.forEach(function (group: any) {
+                console.log(group.key)
+                if (group.key === result) {
+                    matches = true
+                }
+            })
+        })
+        if (!matches) break
+    }
+    console.log(result)
+    let nextGroupRef = db.ref("Data")
+    nextGroupRef.child("NextGroupID").set(result)
+}
+
 
 
 async function addUserToNextGroup(user: User) {
@@ -366,6 +389,7 @@ async function addUserToNextGroup(user: User) {
                 });
                 dbGroupsRef.child(groupId + "/FinalVideoComplete").set(false)
                 dbUsersRef.child(user.getUid() + "/nextGroup").set("")
+                generateNextGroupID()
                 bucket.upload(appdir + "/sample.txt", {
                     destination: "Groups/" + groupId + "/users/" + user.getUid() + "/sample.txt" // upload an empty file to create the directory
                 });

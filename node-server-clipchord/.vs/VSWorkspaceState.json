@@ -1,9 +1,11 @@
 {
   "ExpandedNodes": [
     "",
+    "\\.firebase",
     "\\build",
-    "\\src"
+    "\\functions",
+    "\\SRC"
   ],
-  "SelectedNode": "\\src\\server.ts",
+  "SelectedNode": "\\SRC\\server.ts",
   "PreviewInSolutionExplorer": false
 }

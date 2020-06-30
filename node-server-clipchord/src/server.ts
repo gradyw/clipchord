@@ -11,17 +11,15 @@ import { type } from 'os';
 import { resolve } from 'path';
 import { group } from 'console';
 
-function myCSV(groupid: number, groupname: string, usernames: string[]) {
-
-}
-
 let express = require('express');
 let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
 
-let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk.json");
+var data = fs.readFileSync('admin.txt');
+
+let serviceAccount = require(data.toString());
 
 let app = express();
 

@@ -8,14 +8,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import * as csv from 'csv';
 // const obj = csv();
 const fs_1 = __importDefault(require("fs"));
-function myCSV(groupid, groupname, usernames) {
-}
 let express = require('express');
 let admin = require('firebase-admin');
 let ffmpeg = require('fluent-ffmpeg');
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
-let serviceAccount = require(homedir + "/Downloads/clipchord-firebase-adminsdk.json");
+var data = fs_1.default.readFileSync('admin.txt');
+let serviceAccount = require(homedir + data.toString());
 let app = express();
 let PORT = 3000;
 admin.initializeApp({
@@ -285,11 +284,12 @@ function generateNextGroupID() {
     let length = 6;
     let chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let result = '';
-    while (true) {
+    let matches = true;
+    while (matches) {
         result = '';
+        matches = false;
         for (let i = length; i > 0; --i)
             result += chars[Math.floor(Math.random() * chars.length)];
-        let matches = false;
         dbGroupsRef.once("value").then(function (snapshot) {
             snapshot.forEach(function (group) {
                 console.log(group.key);
@@ -298,8 +298,6 @@ function generateNextGroupID() {
                 }
             });
         });
-        if (!matches)
-            break;
     }
     console.log(result);
     let nextGroupRef = db.ref("Data");

@@ -20,10 +20,10 @@ public class GroupsActivity extends AppCompatActivity {
     static String nextGroupId;
 
     /**
-     * Create or join a group. When there is a non-empty nextGroup group id the server
+     * Create a group. When there is a non-empty nextGroup group id the server
      * will automatically add user to the specified group in database and storage.
      */
-    private void joinGroup() {
+    private void createGroup() {
         DatabaseReference nextGroupIdRef = MainActivity.getDatabase().getReference("Data").child("NextGroupID");
 
         ValueEventListener valueListener = new ValueEventListener() {
@@ -39,7 +39,8 @@ public class GroupsActivity extends AppCompatActivity {
         };
         nextGroupIdRef.addValueEventListener(valueListener);
 
-
         MainActivity.getDatabase().getReference("Data/Users/" + MainActivity.getUid() + "/nextGroup").setValue(nextGroupId);
     }
+
+    
 }

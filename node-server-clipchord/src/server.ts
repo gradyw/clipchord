@@ -351,10 +351,11 @@ function generateNextGroupID(): void {
     let length: number = 6
     let chars: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     let result: string = ''
-    while (true) {
+    let matches = true
+    while (matches) {
         result = ''
+        matches = false
         for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)]
-        let matches = false
         dbGroupsRef.once("value").then(function (snapshot: any) {
             snapshot.forEach(function (group: any) {
                 console.log(group.key)
@@ -363,7 +364,6 @@ function generateNextGroupID(): void {
                 }
             })
         })
-        if (!matches) break
     }
     console.log(result)
     let nextGroupRef = db.ref("Data")

@@ -24,7 +24,7 @@ exports.createGroup = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
             ' while authenticated.')
     }
-    const text = data.text
+    //const text = data.text
     const uid = context.auth?.uid
     const groupId = generateNextGroupID()
     if (typeof uid === 'string') {

@@ -16,7 +16,7 @@ admin.initializeApp({
 
 const db = admin.database()
 const dbGroupsRef = db.ref("Data/Groups")
-// const dbUsersRef = db.ref("Data/Users")
+const dbUsersRef = db.ref("Data/Users")
 // const bucket = admin.storage().bucket()
 
 exports.createGroup = functions.https.onCall(async (data, context) => {
@@ -62,6 +62,17 @@ exports.joinGroup = functions.https.onCall(async (data, context) => {
         userJoined: true,
         groupId: groupId
     }
+})
+
+
+exports.addNewUserToDatabase = functions.auth.user().onCreate((user) => {
+    const dir = dbUsersRef.child(user.uid)
+    dir.set({
+        email: user.email
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not add new user to users database")
+    })
+    functions.logger.log("Finished Adding User " + user)
 })
 
 

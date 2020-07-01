@@ -14,10 +14,10 @@ admin.initializeApp({
     databaseURL: "https://clipchord.firebaseio.com"
 })
 
-let db = admin.database()
-let dbGroupsRef = db.ref("Data/Groups")
-let dbUsersRef = db.ref("Data/Users")
-let bucket = admin.storage().bucket()
+export let db = admin.database()
+export let dbGroupsRef = db.ref("Data/Groups")
+export let dbUsersRef = db.ref("Data/Users")
+export let bucket = admin.storage().bucket()
 
 exports.createGroup = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
@@ -33,7 +33,7 @@ exports.createGroup = functions.https.onCall(async (data, context) => {
 })
 
 
-function addUserToGroupDatabase(uid: string, groupId: string): void {
+export function addUserToGroupDatabase(uid: string, groupId: string): void {
     let groupUserRef = dbGroupsRef.child(groupId + "/users/" + uid);
     groupUserRef.set({
         Downloaded: false,
@@ -42,7 +42,7 @@ function addUserToGroupDatabase(uid: string, groupId: string): void {
     })
 }
 
-function generateNextGroupID(): string {
+export function generateNextGroupID(): string {
     let length: number = 6
     let chars: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     let result: string = ''

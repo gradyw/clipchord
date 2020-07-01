@@ -1,12 +1,9 @@
 import fs from 'fs';
-import { admin } from './server';
 
 const ffmpeg = require('fluent-ffmpeg');
 
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
-
-let bucket = admin.storage().bucket();
 
 async function edit() {
     var fileDs = ["PaperMoonBariFinal.mp4", "PaperMoonLeadFinal.mp4", "PaperMoonTenorFinal.mp4", "PaperMoonBassFinal.mp4"];
@@ -106,43 +103,4 @@ async function edit() {
     }).on('error', function (err: Error) {
         console.log('an error happened: ' + err.message);
     }).run();
-}
-
-async function moveUserVideosFirebaseToLocal(groupid: number, username: string) {
-    downloadFileAndDelete("Groups/" + groupid + "/" + username + ".mp4", "Groups/" + groupid, username + ".mp4");
-}
-
-// TODO find a way to specify return type as bucket file
-async function downloadFile(name: string, destDirName: string, destFileName: string) {
-    const options = {
-        // The path to which the file should be downloaded, e.g. "./file.txt"
-        destination: appdir + destDirName + "/" + destFileName
-    };
-
-    if (!fs.existsSync(appdir + destDirName)) {
-        fs.mkdirSync(appdir + destDirName);
-    }
-
-    // Downloads the file
-    await bucket
-        .file(name)
-        .download(options);
-
-    console.log(
-        'success'
-    );
-
-    return bucket.file(name);
-}
-
-async function downloadFileAndDelete(name: string, destDirName: string, destFileName: string) {
-    console.log("dest" + name + destDirName);
-    const downloadedFile = downloadFile(name, destDirName, destFileName);
-    (await downloadedFile).delete();
-}
-
-async function uploadCompletedVideo(groupid: number) {
-    bucket.upload(appdir + "/Groups/" + groupid + "final.mp4", {
-        destination: "Groups/" + groupid + "/" + "final.mp4"
-    });
 }

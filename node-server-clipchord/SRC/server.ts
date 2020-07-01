@@ -1,20 +1,12 @@
 import fs from 'fs';
-import { User, Group } from './databaseManager';
+//import { User, Group } from './databaseManager';
 import { Transform } from 'stream';
 import { type } from 'os';
 import { resolve } from 'path';
 import { group } from 'console';
 
 const express = require('express');
-export const admin = require('firebase-admin');
-var data = fs.readFileSync('admin.txt');
-let serviceAccount = require(data.toString());
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: "clipchord.appspot.com",
-    databaseURL: "https://clipchord.firebaseio.com"
-});
+const http = require('http');
 
 const fileManager = require("./fileManager");
 const databaseManager = require("./databaseManager");
@@ -23,6 +15,14 @@ const appdir = homedir + '/Desktop/ClipchordApp/';
 
 let app = express();
 
+const hostname = '127.0.0.1';
+const port = 7777;
+
+const server = http.createServer((req:any, res:any) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Hello World');
+});
 
 
 async function run() {
@@ -30,7 +30,7 @@ async function run() {
     console.log("Testing");
 
     // create a database directory for any new users
-    await new Promise((resolve) => {
+    /*await new Promise((resolve) => {
         let prevAllUsers: User[] = Object.assign([], databaseManager.allUsers);
         databaseManager.saveUsers()
             .then(function () {
@@ -86,7 +86,7 @@ async function run() {
             console.log("The read failed: " + errorObject.code);
             resolve();
         });
-    });
+    });*/
     console.log("Finished");
 }
 

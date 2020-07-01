@@ -1,10 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\build",
     "\\functions",
-    "\\SRC"
+    "\\server",
+    "\\server\\SRC"
   ],
-  "SelectedNode": "\\functions\\lib",
+  "SelectedNode": "\\server",
   "PreviewInSolutionExplorer": false
 }

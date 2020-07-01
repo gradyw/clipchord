@@ -1,7 +1,5 @@
-import fs from 'fs';
-import { admin } from './server';
+/*import fs from 'fs';
 
-let auth = admin.auth();
 const homedir = require('os').homedir();
 const appdir = homedir + '/Desktop/ClipchordApp/';
 
@@ -170,4 +168,4 @@ export async function addUserToNextGroup(user: User) {
             }
         })
     })
-}
+}*/

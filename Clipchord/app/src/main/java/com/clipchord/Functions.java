@@ -12,16 +12,16 @@ import java.util.Map;
 
 public class Functions {
 
-    private FirebaseFunctions functions = FirebaseFunctions.getInstance();
+    private static FirebaseFunctions functions = FirebaseFunctions.getInstance();
 
-    Task<String> joinGroup(String groupId) {
+    static Task<String> joinGroup(String groupId) {
         Map<String, Object> data = new HashMap<>();
 
         data.put("text", groupId);
         data.put("push", true);
 
         return functions.
-                getHttpsCallable("JoinGroup")
+                getHttpsCallable("joinGroup")
                 .call(data)
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
@@ -32,14 +32,14 @@ public class Functions {
                 });
     }
 
-    Task<String> createGroup() {
+    static Task<String> createGroup() {
         Map<String, Object> data = new HashMap<>();
 
         data.put("text", "New Group");
         data.put("push", true);
 
         return functions.
-                getHttpsCallable("CreateGroup")
+                getHttpsCallable("createGroup")
                 .call(data)
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
@@ -50,7 +50,7 @@ public class Functions {
                 });
     }
 
-    Task<String> uploadFile(String groupId) {
+    static Task<String> uploadFile(String groupId) {
         Map<String, Object> data = new HashMap<>();
 
         data.put("text", groupId);

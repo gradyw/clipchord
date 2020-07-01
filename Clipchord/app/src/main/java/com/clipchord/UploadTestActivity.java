@@ -22,26 +22,26 @@ import java.io.File;
 
 public class UploadTestActivity extends AppCompatActivity {
 
-    private void setDbVideoComplete(String groupId) {
-        DatabaseReference ref = MainActivity.getDatabase().getReference("Data/Groups/" + groupId + "/users/" +
-                MainActivity.getUid() + "/VideoComplete");
-        ref.setValue(true);
-    }
+//    private void setDbVideoComplete(String groupId) {
+//        DatabaseReference ref = MainActivity.getDatabase().getReference("Data/Groups/" + groupId + "/users/" +
+//                MainActivity.getUid() + "/VideoComplete");
+//        ref.setValue(true);
+//    }
 
-    private void uploadVideo(String groupId) {
-        File uploadFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/" + MainActivity.getUid() + ".mp4");
-        if (uploadFile.exists()) {
-            Uri file = Uri.fromFile(uploadFile);
-            StorageReference fileRef = MainActivity.getStorageRef().child("Groups/" + groupId + "/users/" + MainActivity.getUid() + "/" + MainActivity.getUid() + ".mp4");
-            UploadTask uploadTask = fileRef.putFile(file);
-            uploadTask.addOnFailureListener(exception -> System.out.println("Unsuccessful Upload")).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    setDbVideoComplete(groupId);
-                }
-            });
-        }
-    }
+//    private void uploadVideo(String groupId) {
+//        File uploadFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/" + MainActivity.getUid() + ".mp4");
+//        if (uploadFile.exists()) {
+//            Uri file = Uri.fromFile(uploadFile);
+//            StorageReference fileRef = MainActivity.getStorageRef().child("Groups/" + groupId + "/users/" + MainActivity.getUid() + "/" + MainActivity.getUid() + ".mp4");
+//            UploadTask uploadTask = fileRef.putFile(file);
+//            uploadTask.addOnFailureListener(exception -> System.out.println("Unsuccessful Upload")).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                @Override
+//                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                    setDbVideoComplete(groupId);
+//                }
+//            });
+//        }
+//    }
 
 
     @Override
@@ -52,18 +52,22 @@ public class UploadTestActivity extends AppCompatActivity {
         Button button = findViewById(R.id.upload);
 
         button.setOnClickListener((v) -> {
-            File uploadFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Download/test.txt");
-            System.out.println("File Exists" + uploadFile.exists());
+//            File uploadFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Download/test.txt");
+//            System.out.println("File Exists" + uploadFile.exists());
 
-            Uri file = Uri.fromFile(uploadFile);
-            StorageReference fileRef = MainActivity.getStorageRef().child(file.getLastPathSegment());
-            UploadTask uploadTask = fileRef.putFile(file);
+//            Functions.createGroup();
+//            Functions.joinGroup("Ucyw5B");
+            System.out.println("finished function");
+//
+//            Uri file = Uri.fromFile(uploadFile);
+//            StorageReference fileRef = MainActivity.getStorageRef().child(file.getLastPathSegment());
+//            UploadTask uploadTask = fileRef.putFile(file);
 
-            uploadTask.addOnFailureListener(exception -> System.out.println("Unsuccessful Upload")).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                }
-            });
+//            uploadTask.addOnFailureListener(exception -> System.out.println("Unsuccessful Upload")).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                @Override
+//                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                }
+//            });
         });
     }
 }

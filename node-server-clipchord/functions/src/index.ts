@@ -14,10 +14,10 @@ admin.initializeApp({
     databaseURL: "https://clipchord.firebaseio.com"
 })
 
-export let db = admin.database()
-export let dbGroupsRef = db.ref("Data/Groups")
-export let dbUsersRef = db.ref("Data/Users")
-export let bucket = admin.storage().bucket()
+const db = admin.database()
+const dbGroupsRef = db.ref("Data/Groups")
+// const dbUsersRef = db.ref("Data/Users")
+// const bucket = admin.storage().bucket()
 
 exports.createGroup = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
@@ -27,24 +27,59 @@ exports.createGroup = functions.https.onCall(async (data, context) => {
     //const text = data.text
     const uid = context.auth?.uid
     const groupId = generateNextGroupID()
+    const groupRef = dbGroupsRef.child(groupId)
+    groupRef.set({
+        FinalVideoComplete: false
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not add FinalVideoComplete value to group database")
+    })
     if (typeof uid === 'string') {
         addUserToGroupDatabase(uid, groupId)
+    } else {
+        throw new functions.https.HttpsError('failed-precondition', 'Uid not a string')
+    }
+
+    return {
+        groupCreated: true
     }
 })
 
 
-export function addUserToGroupDatabase(uid: string, groupId: string): void {
-    let groupUserRef = dbGroupsRef.child(groupId + "/users/" + uid);
+exports.joinGroup = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
+            ' while authenticated.')
+    }
+    const uid = context.auth.uid
+    const groupId = data.text
+    if (typeof uid === 'string') {
+        addUserToGroupDatabase(uid, groupId)
+    } else {
+        throw new functions.https.HttpsError('failed-precondition', 'Uid not a string')
+    }
+
+    return {
+        userJoined: true,
+        groupId: groupId
+    }
+})
+
+
+function addUserToGroupDatabase(uid: string, groupId: string): void {
+    const groupUserRef = dbGroupsRef.child(groupId + "/users/" + uid);
     groupUserRef.set({
         Downloaded: false,
         VideoComplete: false,
         FinalVideoRequested: false
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not add user to group database")
     })
+    
 }
 
-export function generateNextGroupID(): string {
-    let length: number = 6
-    let chars: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+function generateNextGroupID(): string {
+    const length: number = 6
+    const chars: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     let result: string = ''
     let matches = true
     while (matches) {
@@ -58,6 +93,8 @@ export function generateNextGroupID(): string {
                     matches = true
                 }
             })
+        }).catch(() => {
+            throw new functions.https.HttpsError('aborted', "Group ID not generated")
         })
     }
     return result

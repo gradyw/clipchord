@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/gradyw/clipchord-server#readme",
   "dependencies": {
+    "@types/qs": "^6.9.3",
     "csv": "^5.3.2",
     "express": "^4.17.1",
     "firebase-admin": "^8.10.0",

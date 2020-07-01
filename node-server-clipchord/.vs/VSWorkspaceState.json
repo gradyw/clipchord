@@ -1,11 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\.firebase",
     "\\build",
     "\\functions",
     "\\SRC"
   ],
-  "SelectedNode": "\\SRC\\databaseManager.ts",
+  "SelectedNode": "\\functions\\lib",
   "PreviewInSolutionExplorer": false
 }

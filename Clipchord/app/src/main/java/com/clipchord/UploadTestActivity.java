@@ -19,6 +19,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.IOException;
 
 public class UploadTestActivity extends AppCompatActivity {
 
@@ -57,6 +58,13 @@ public class UploadTestActivity extends AppCompatActivity {
 
 //            Functions.createGroup();
 //            Functions.joinGroup("Ucyw5B");
+            String a = "un";
+            try {
+                a = NoFirebaseFunctions.test();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println(a);
             System.out.println("finished function");
 //
 //            Uri file = Uri.fromFile(uploadFile);

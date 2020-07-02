@@ -18,15 +18,26 @@ let app = express();
 const hostname = '0.0.0.0';
 const port = 3000;
 
-const server = http.createServer((req:any, res:any) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello World');
-});
+const requestListener = function (req: any, res:any) {
+	// for HTML
+	// res.statusCode = 200;
+    // res.setHeader('Content-Type', 'text/plain');
+	// res.end('Hello World');
+	
+	// for JSON
+	res.setHeader("Content-Type", "application/json")
+	res.writeHead(200)
+	res.end('{"message":"This is a JSON response"}')
+}
+
+
+const server = http.createServer(requestListener);
 
 server.listen(port, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
-});
+})
+
+
 
 
 async function run() {

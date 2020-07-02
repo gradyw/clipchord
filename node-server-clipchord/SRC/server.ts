@@ -25,9 +25,24 @@ const requestListener = function (req: any, res:any) {
 	// res.end('Hello World');
 	
 	// for JSON
-	res.setHeader("Content-Type", "application/json")
-	res.writeHead(200)
-	res.end('{"message":"This is a JSON response"}')
+	// res.setHeader("Content-Type", "application/json")
+	// res.writeHead(200)
+    // res.end('{"message":"This is a JSON response"}')
+    
+
+    switch(req.url) {
+        case "/JSON1":
+            res.writeHead(200)
+            res.end('{"message":"This is a JSON response 1"}')
+            break
+        case "/JSON2":
+            res.writeHead(200)
+            res.end('{"message":"This is a JSON response 2"}')
+            break
+        default:
+            res.writeHead(404)
+            res.end('{"message":"404 Resource Not Found"}')
+    }
 }
 
 

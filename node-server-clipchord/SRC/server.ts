@@ -15,8 +15,8 @@ const appdir = homedir + '/Desktop/ClipchordApp/';
 
 let app = express();
 
-const hostname = '127.0.0.1';
-const port = 7777;
+const hostname = '0.0.0.0';
+const port = 3000;
 
 const server = http.createServer((req:any, res:any) => {
     res.statusCode = 200;

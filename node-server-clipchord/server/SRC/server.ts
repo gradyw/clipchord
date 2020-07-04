@@ -10,6 +10,34 @@ export const admin = require('firebase-admin');
 var data = fs.readFileSync('admin.txt');
 let serviceAccount = require(data.toString());
 
+const firebase = require("firebase");
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDxsGkfoFxwRVAA6uoQWyDH8FSdh6C7ROk",
+    authDomain: "clipchord.firebaseapp.com",
+    databaseURL: "https://clipchord.firebaseio.com",
+    projectId: "clipchord",
+    storageBucket: "clipchord.appspot.com",
+    messagingSenderId: "303610186025",
+    appId: "1:303610186025:web:3cd3c0dc7d14f85baf4f38",
+    measurementId: "G-96T9MCEMF1"
+};
+
+
+  
+
+
+firebase.initializeApp(firebaseConfig);
+
+const messaging = firebase.messaging();
+
+
+
+messaging.onMessage((payload: any) =>  {
+    console.log('Message received. ', payload);
+})
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     storageBucket: "clipchord.appspot.com",

@@ -125,7 +125,7 @@ exports.joinGroup = functions.https.onCall(async (data, context) => {
     }
 })
 
-exports.checkVideoReceived = functions.database.ref('Data/Groups/{groupId}/users/{userId}/Downloaded')
+exports.notifyVideoReceived = functions.database.ref('Data/Groups/{groupId}/users/{userId}/Downloaded')
 .onUpdate((change, context) => {
     if (change.after.exportVal() === true) {
         let registrationToken: string = "None";

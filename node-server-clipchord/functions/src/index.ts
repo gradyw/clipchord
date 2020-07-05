@@ -92,20 +92,16 @@ exports.createGroup = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
             ' while authenticated.')
     }
-    //const text = data.text
     const uid = context.auth?.uid
     const groupId = generateNextGroupID()
     const groupRef = dbGroupsRef.child(groupId)
+    const token = data.token
     groupRef.set({
         FinalVideoComplete: false
     }).catch(() => {
         throw new functions.https.HttpsError('aborted', "Could not add FinalVideoComplete value to group database")
     })
-    if (typeof uid === 'string') {
-        addUserToGroupDatabase(uid, groupId)
-    } else {
-        throw new functions.https.HttpsError('failed-precondition', 'Uid not a string')
-    }
+    addUserToGroupDatabase(uid, groupId, token)
 
     return {
         groupCreated: true,
@@ -120,8 +116,9 @@ exports.joinGroup = functions.https.onCall(async (data, context) => {
             ' while authenticated.')
     }
     const uid = context.auth.uid
-    const groupId = data.text
-    addUserToGroupDatabase(uid, groupId)
+    const groupId = data.groupId
+    const token = data.token
+    addUserToGroupDatabase(uid, groupId, token)
     return {
         userJoined: true,
         groupId: groupId
@@ -155,10 +152,17 @@ exports.updateVideoComplete = functions.https.onCall(async (data, context) => {
             ' while authenticated.')
     }
     const uid = context.auth.uid
-    const groupId = data.text
+    const groupId = data.groupId
+    const token = data.token
+
     dbGroupsRef.child(groupId + '/users/' + uid + '/VideoComplete').set(true)
     .catch(() => {
-        throw new functions.https.HttpsError('aborted', 'no such group/user videoComplete value')
+        throw new functions.https.HttpsError('aborted', 'no such group/user VideoComplete value')
+    })
+
+    dbGroupsRef.child(groupId + '/users/' + uid + '/MessagingToken').set(token)
+    .catch(() => {
+        throw new functions.https.HttpsError('aborted', 'no such group/user MessagingToken value')
     })
     return {
         videoUploaded: true
@@ -175,13 +179,44 @@ exports.addNewUserToDatabase = functions.auth.user().onCreate((user) => {
     functions.logger.log("Finished Adding User " + user)
 })
 
+exports.notifyFinalVideoComplete = functions.database.ref('Data/Groups/{groupId}/FinalVideoComplete')
+    .onUpdate((change, context) => {
+        if (change.after.exportVal() === true) {
+            let registrationTokens: string[] = [];
+            const ref = dbGroupsRef.child('{groupId}/users');// this might not work as intended, might send
+                                                             // to everyone every time
+            ref.once("value", function (user: any) {
+                user.forEach(function (token: any) {
+                    if (token.key === "MessagingToken") {
+                        registrationTokens.push(token.val())
+                    }
+                })
+            }).catch(() => {
+                throw new functions.https.HttpsError('aborted', "Could not find tokens")
+            })
 
-function addUserToGroupDatabase(uid: string, groupId: string): void {
+            const message = {
+                data: {finalVideoReady: 'Final Video is Ready!'},
+                tokens: registrationTokens,
+            }
+
+            admin.messaging().sendMulticast(message)
+            .then((response) => {
+                functions.logger.log(response.successCount + "messages sent successfully")
+            }).catch(() => {
+                throw new functions.https.HttpsError('aborted', "Could not send messages")
+            })
+        }
+    })
+
+
+function addUserToGroupDatabase(uid: string, groupId: string, token: string): void {
     const groupUserRef = dbGroupsRef.child(groupId + "/users/" + uid);
     groupUserRef.set({
         Downloaded: false,
         VideoComplete: false,
-        FinalVideoRequested: false
+        FinalVideoRequested: false,
+        MessagingToken: token
     }).catch(() => {
         throw new functions.https.HttpsError('aborted', "Could not add user to group database")
     })

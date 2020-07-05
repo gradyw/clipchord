@@ -109,7 +109,8 @@ exports.createGroup = functions.https.onCall(async (data, context) => {
     }
 
     return {
-        groupCreated: true
+        groupCreated: true,
+        groupId: groupId
     }
 })
 

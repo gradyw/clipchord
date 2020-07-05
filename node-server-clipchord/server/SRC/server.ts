@@ -51,7 +51,6 @@ const wait = (time: number) => {
     return new Promise(resolve => setTimeout(resolve, time))
 }
 
-// remove and secure pw!!!!
 async function signIn() {
     const password = fs.readFileSync('authpw.txt').toString()
     const email = fs.readFileSync('authemail.txt').toString()
@@ -59,7 +58,6 @@ async function signIn() {
     await new Promise((resolve, reject) => {
         console.log(email, password)
         firebase.auth().signInWithEmailAndPassword(email, password).then(
-            // console.log("Signed in", firebase.auth().uid)
             resolve()
         ).catch(function(error: any) {
             console.log(error.code);

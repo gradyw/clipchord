@@ -17,7 +17,6 @@ admin.initializeApp({
 const db = admin.database()
 const dbGroupsRef = db.ref("Data/Groups")
 const dbUsersRef = db.ref("Data/Users")
-// const bucket = admin.storage().bucket()
 
 
 exports.getUploadedWaiting = functions.https.onCall(async (data, context) => {
@@ -122,18 +121,49 @@ exports.joinGroup = functions.https.onCall(async (data, context) => {
     }
     const uid = context.auth.uid
     const groupId = data.text
-    if (typeof uid === 'string') {
-        addUserToGroupDatabase(uid, groupId)
-    } else {
-        throw new functions.https.HttpsError('failed-precondition', 'Uid not a string')
-    }
-
+    addUserToGroupDatabase(uid, groupId)
     return {
         userJoined: true,
         groupId: groupId
     }
 })
 
+exports.checkVideoReceived = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
+            ' while authenticated.')
+    }
+    const uid = context.auth.uid
+    const groupId = data.text
+    let ref = dbGroupsRef.child(groupId + '/users/' + uid);
+    let videoReceived = false
+    ref.once("value", function (snapshot: any) {
+        if (snapshot.key === "Downloaded") {
+            videoReceived = snapshot.val()
+        }
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not find location in database")
+    })
+    return {
+        videoReceived: videoReceived
+    }
+})
+
+exports.updateVideoComplete = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
+            ' while authenticated.')
+    }
+    const uid = context.auth.uid
+    const groupId = data.text
+    dbGroupsRef.child(groupId + '/users/' + uid + '/VideoComplete').set(true)
+    .catch(() => {
+        throw new functions.https.HttpsError('aborted', 'no such group/user videoComplete value')
+    })
+    return {
+        videoUploaded: true
+    }
+})
 
 exports.addNewUserToDatabase = functions.auth.user().onCreate((user) => {
     const dir = dbUsersRef.child(user.uid)

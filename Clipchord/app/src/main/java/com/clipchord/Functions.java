@@ -83,7 +83,7 @@ public class Functions {
         data.put("push", true);
 
         return functions.
-                getHttpsCallable("UpdateVideoComplete")
+                getHttpsCallable("updateVideoComplete")
                 .call(data)
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override

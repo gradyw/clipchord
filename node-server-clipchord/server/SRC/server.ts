@@ -91,7 +91,7 @@ async function downloadFile(name: string, destDirName: string, destFileName: str
     };
 
     if (!fs.existsSync(appdir + destDirName)) {
-        fs.mkdirSync(appdir + destDirName);
+        fs.mkdirSync(appdir + destDirName, {recursive: true})
     }
 
     // Downloads the file
@@ -107,10 +107,10 @@ async function downloadFile(name: string, destDirName: string, destFileName: str
 }
 
 // END OF MOVED FUNCTIONS FROM FILE MANAGER
-// BEGINNING OF MOVED FUNCTIONS FROM DATABASE MANAGER
+// BEGINNING OF MOVED DEFINITIONS FROM DATABASE MANAGER
 const db = admin.database()
 const dbGroupsRef = db.ref('Data/Groups')
-
+// END OF MOVED DEFINITIONS FROM DATABASE MANAGER
 
 async function run() {
 

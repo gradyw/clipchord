@@ -125,24 +125,35 @@ exports.joinGroup = functions.https.onCall(async (data, context) => {
     }
 })
 
-exports.checkVideoReceived = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
-            ' while authenticated.')
-    }
-    const uid = context.auth.uid
-    const groupId = data.text
-    let ref = dbGroupsRef.child(groupId + '/users/' + uid);
-    let videoReceived = false
-    ref.once("value", function (snapshot: any) {
-        if (snapshot.key === "Downloaded") {
-            videoReceived = snapshot.val()
+exports.checkVideoReceived = functions.database.ref('Data/Groups/{groupId}/users/{userId}/Downloaded')
+.onUpdate((change, context) => {
+    if (change.after.exportVal() === true) {
+        let registrationToken: string = "None";
+        if (change.after.ref.parent === null) {
+            throw new functions.https.HttpsError('failed-precondition', 'must not be root directory')
         }
-    }).catch(() => {
-        throw new functions.https.HttpsError('aborted', "Could not find location in database")
-    })
-    return {
-        videoReceived: videoReceived
+        const ref = change.after.ref.parent.child('MessagingToken')
+        ref.once("value", function (snapshot: any) {
+            registrationToken = snapshot.val()
+        }).catch(() => {
+            throw new functions.https.HttpsError('aborted', "Could not find token")
+        })
+
+        if (registrationToken === "None") {
+            throw new functions.https.HttpsError('aborted', 'No token')
+        }
+
+        const message = {
+            data: {finalVideoReady: 'Final Video is Ready!'},
+            token: registrationToken
+        }
+
+        admin.messaging().send(message)
+        .then((response) => {
+            functions.logger.log("Message sent successfully")
+        }).catch(() => {
+            throw new functions.https.HttpsError('aborted', "Could not send message")
+        })
     }
 })
 
@@ -180,34 +191,36 @@ exports.addNewUserToDatabase = functions.auth.user().onCreate((user) => {
 })
 
 exports.notifyFinalVideoComplete = functions.database.ref('Data/Groups/{groupId}/FinalVideoComplete')
-    .onUpdate((change, context) => {
-        if (change.after.exportVal() === true) {
-            let registrationTokens: string[] = [];
-            const ref = dbGroupsRef.child('{groupId}/users');// this might not work as intended, might send
-                                                             // to everyone every time
-            ref.once("value", function (user: any) {
-                user.forEach(function (token: any) {
-                    if (token.key === "MessagingToken") {
-                        registrationTokens.push(token.val())
-                    }
-                })
-            }).catch(() => {
-                throw new functions.https.HttpsError('aborted', "Could not find tokens")
-            })
-
-            const message = {
-                data: {finalVideoReady: 'Final Video is Ready!'},
-                tokens: registrationTokens,
-            }
-
-            admin.messaging().sendMulticast(message)
-            .then((response) => {
-                functions.logger.log(response.successCount + "messages sent successfully")
-            }).catch(() => {
-                throw new functions.https.HttpsError('aborted', "Could not send messages")
-            })
+.onUpdate((change, context) => {
+    if (change.after.exportVal() === true) {
+        let registrationTokens: string[] = [];
+        if (change.after.ref.parent === null) {
+            throw new functions.https.HttpsError('failed-precondition', 'must not be root directory')
         }
-    })
+        const ref = change.after.ref.parent.child('users')
+        ref.once("value", function (user: any) {
+            user.forEach(function (token: any) {
+                if (token.key === "MessagingToken") {
+                    registrationTokens.push(token.val())
+                }
+            })
+        }).catch(() => {
+            throw new functions.https.HttpsError('aborted', "Could not find tokens")
+        })
+
+        const message = {
+            data: {finalVideoReady: 'Final Video is Ready!'},
+            tokens: registrationTokens,
+        }
+
+        admin.messaging().sendMulticast(message)
+        .then((response) => {
+            functions.logger.log(response.successCount + "messages sent successfully")
+        }).catch(() => {
+            throw new functions.https.HttpsError('aborted', "Could not send messages")
+        })
+    }
+})
 
 
 function addUserToGroupDatabase(uid: string, groupId: string, token: string): void {

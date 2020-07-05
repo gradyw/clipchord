@@ -27,6 +27,7 @@
     "@types/qs": "^6.9.3",
     "csv": "^5.3.2",
     "express": "^4.17.1",
+    "firebase": "^7.15.5",
     "firebase-admin": "^8.10.0",
     "fluent-ffmpeg": "^2.1.2",
     "neat-csv": "^5.2.0",

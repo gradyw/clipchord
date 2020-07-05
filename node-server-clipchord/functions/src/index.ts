@@ -19,6 +19,75 @@ const dbGroupsRef = db.ref("Data/Groups")
 const dbUsersRef = db.ref("Data/Users")
 // const bucket = admin.storage().bucket()
 
+
+exports.getUploadedWaiting = functions.https.onCall(async (data, context) => {
+    
+    if (!context.auth) {
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
+            ' while authenticated.')
+    }
+    const id: string = context.auth.uid;
+    if (id !== "ywjvbu6GiIauRkNsGccILjCxpep1") {
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 
+            ' while authenticated as admin account.')
+    }
+    // let waiting: Video[] = []
+
+    let firstGroupId: string = "None"
+    let firstUid: string = "None"
+
+    // let groupIds: string[] = []
+    // let uids: string[] = []
+
+    // let wait2: string[][] = [];
+
+    dbGroupsRef.orderByKey();
+
+    await dbGroupsRef.once("value", function (snapshot: any) {
+        snapshot.forEach(function (allGroups: any) {
+            let groupId = allGroups.key
+            allGroups.forEach(function (singleGroup: any) {
+                const usersKey = singleGroup.key;
+                if (usersKey === "users") {
+                    singleGroup.forEach(function (userKey: any) {
+                        const uid = userKey.key
+                        let downloaded = true
+                        let videoComplete = false
+                        userKey.forEach(function (userDownloaded: any) {
+                            functions.logger.log(userDownloaded.key)
+                            if (userDownloaded.key === "Downloaded" && userDownloaded.val() === false) {
+                                downloaded = false;
+                            }
+                            if (userDownloaded.key === "VideoComplete" && userDownloaded.val() === true) {
+                                videoComplete = true;
+                            }
+                        })
+                        if (!downloaded && videoComplete) {
+                            firstGroupId = groupId;
+                            firstUid = uid;
+                            // groupIds.push(groupId)
+                            // uids.push(uid)
+                            // waiting.push(new Video(groupId, uid))
+                            // wait2.push([groupId, uid])
+                        }
+                    })
+                }
+
+            })
+        })
+        return true;
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not find users needing to download")
+    })
+
+    return {
+        groupId: firstGroupId,
+        uid: firstUid
+    }
+        // list2: wait2
+    
+})
+
 exports.createGroup = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('failed-precondition', 'The function must be called' + 

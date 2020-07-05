@@ -2,3 +2,5 @@
 .DS_Store
 node-server-clipchord/admin.txt
 node-server-clipchord/server/admin.txt
+node-server-clipchord/server/authpw.txt
+node-server-clipchord/server/authemail.txt

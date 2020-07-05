@@ -4,6 +4,7 @@ import { Transform } from 'stream';
 import { type } from 'os';
 import { resolve } from 'path';
 import { group } from 'console';
+import { sign } from 'crypto';
 
 const express = require('express');
 export const admin = require('firebase-admin');
@@ -25,18 +26,13 @@ const firebaseConfig = {
 };
 
 
-  
+
 
 
 firebase.initializeApp(firebaseConfig);
 
-const messaging = firebase.messaging();
+let functions = firebase.functions();
 
-
-
-messaging.onMessage((payload: any) =>  {
-    console.log('Message received. ', payload);
-})
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -51,69 +47,113 @@ const appdir = homedir + '/Desktop/ClipchordApp/';
 
 let app = express();
 
+const wait = (time: number) => {
+    return new Promise(resolve => setTimeout(resolve, time))
+}
+
+// remove and secure pw!!!!
+async function signIn() {
+    const password = fs.readFileSync('authpw.txt').toString()
+    const email = fs.readFileSync('authemail.txt').toString()
+
+    await new Promise((resolve, reject) => {
+        console.log(email, password)
+        firebase.auth().signInWithEmailAndPassword(email, password).then(
+            // console.log("Signed in", firebase.auth().uid)
+            resolve()
+        ).catch(function(error: any) {
+            console.log(error.code);
+            reject()
+        })
+    })    
+}
+
+let waitingGroup: string = "None";
+let waitingUser: string = "None";
+
+async function downloadFileAndDelete(name: string, destDirName: string, destFileName: string) {
+    console.log("dest" + name + destDirName);
+    const downloadedFile = downloadFile(name, destDirName, destFileName);
+    (await downloadedFile).delete();
+}
+
+let bucket = admin.storage().bucket();
+
+
+// THIS LINE TO NEXT MAJOR COMMENT SHOULD BE BACK IN FILE MANAGER. COULDN'T
+// FIGURE OUT HOW TO WORK MODULES. GRADY 7/4/20
+
+// TODO find a way to specify return type as bucket file
+async function downloadFile(name: string, destDirName: string, destFileName: string) {
+    const options = {
+        // The path to which the file should be downloaded, e.g. "./file.txt"
+        destination: appdir + destDirName + "/" + destFileName
+    };
+
+    if (!fs.existsSync(appdir + destDirName)) {
+        fs.mkdirSync(appdir + destDirName);
+    }
+
+    // Downloads the file
+    await bucket
+        .file(name)
+        .download(options);
+
+    console.log(
+        'success'
+    );
+
+    return bucket.file(name);
+}
+
+// END OF MOVED FUNCTIONS FROM FILE MANAGER
+// BEGINNING OF MOVED FUNCTIONS FROM DATABASE MANAGER
+const db = admin.database()
+const dbGroupsRef = db.ref('Data/Groups')
 
 
 async function run() {
 
-    console.log("Testing");
 
-    // create a database directory for any new users
-    await new Promise((resolve) => {
-        let prevAllUsers: User[] = Object.assign([], databaseManager.allUsers);
-        databaseManager.saveUsers()
-            .then(function () {
-                for (let i = prevAllUsers.length; i < databaseManager.allUsers.length; i++) {
-                    databaseManager.createDatabaseUserDirectory(databaseManager.allUsers[i])
-                }
-            }).then(function () {// check for any new group the user is in
-                databaseManager.allUsers.forEach(function (user: User) {
-                    console.log(user.getName())
-                    databaseManager.addUserToNextGroup(user)
-                });
+    // should be outside of loop
+    await signIn()
+    await wait(10000)
+    
+    
+    
+    // check for next video awaiting downloading
+    await new Promise((resolve, reject) => {
+        
+        let getUploadedWaiting = functions.httpsCallable('getUploadedWaiting');
+        getUploadedWaiting({text: 'none'}).then(function(result: any) {
+            waitingGroup = result.data.groupId
+            waitingUser = result.data.uid
+            resolve()
+
+        }).catch(function(error: any) {
+            console.log(error.message)
+            reject()
+        })
+    })
+
+    
+
+    
+    // // download any videos that have not yet been downloaded
+    await new Promise((resolve, reject) => {
+        console.log(waitingGroup, "Group", waitingUser, "User")
+        if (waitingGroup === "None" || waitingUser === "None") resolve()
+        else {
+            downloadFileAndDelete("Groups/" + waitingGroup + "/users/" + waitingUser + "/" + waitingUser + ".mp4", 
+                "Groups/" + waitingGroup + "/users/" + waitingUser, waitingUser + ".mp4")
+            .catch(function(error: any) {
+                console.log(error.message)
+                 reject();
             })
-        resolve();
-    });
-
-
-    // download any videos that have not yet been downloaded
-    await new Promise((resolve) => {
-        databaseManager.dbGroupsRef.orderByKey();
-
-        databaseManager.dbGroupsRef.once("value").then(function (snapshot: any) {
-            snapshot.forEach(function (allGroups: any) {
-                let key = allGroups.key;
-                allGroups.forEach(function (singleGroup: any) {
-                    let key2 = singleGroup.key;
-                    if (key2 == "users") {
-                        singleGroup.forEach(function (userKey: any) {
-                            let key3 = userKey.key
-                            let downloaded = true
-                            let videoComplete = false
-                            userKey.forEach(function (userDownloaded: any) {
-                                if (userDownloaded.key == "Downloaded" && userDownloaded.val() == false) {
-                                    downloaded = false;
-                                }
-                                if (userDownloaded.key == "VideoComplete" && userDownloaded.val() == true) {
-                                    videoComplete = true;
-                                }
-                            })
-                            if (!downloaded && videoComplete) {
-                                fileManager.downloadFileAndDelete("Groups/" + allGroups.key + "/" + userKey.key + "/" + userKey.key + ".mp4",
-                                    "Groups/" + allGroups.key + "/" + userKey.key, userKey.key + ".mp4");
-                                databaseManager.dbGroupsRef.child(key + "/" + key2 + "/" + key3 + "/Downloaded").set(true);
-                            }
-                        })
-                    }
-
-                });
-
-                return true;
-            })
-            resolve();
-        }, function (errorObject: any) {
-            console.log("The read failed: " + errorObject.code);
-            resolve();
-        });
+            dbGroupsRef.child(waitingGroup + "/users/" + waitingUser + "/Downloaded").set(true);
+            resolve()
+        }
+        
     });
     console.log("Finished");
 }

@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as path from 'path'
 
 
 // // Start writing Firebase Functions
@@ -180,6 +181,43 @@ exports.updateVideoComplete = functions.https.onCall(async (data, context) => {
     }
 })
 
+exports.notifyFinalVideoUploaded = functions.storage.object().onFinalize(async (object) => {
+    if (typeof(object.name) !== 'string') {
+        throw new functions.https.HttpsError('failed-precondition', 'file must exist')
+    }
+    const filePath = object.name
+    const fileName = path.basename(filePath)
+    if (fileName !== "finalVideo.mp4") {
+        return
+    }
+
+    const pathList: string[] = filePath.split('/finalVideo.mp4')
+    let registrationToken: string = "None"
+    let index = 0;
+    index = pathList.indexOf('users') + 1
+    if (index === 1) {
+        throw new functions.https.HttpsError('aborted', 'Problem with path string split')
+    }
+
+    let ref = db.ref(pathList[0]).child('MessagingToken')
+    ref.once("value", function (snapshot: any) {
+        registrationToken = snapshot.val()
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not find token")
+    })
+
+    const message = {
+        data: {finalVideoReadyToDownload: 'You have 5 minutes to download your final video!'},
+        token: registrationToken,
+    }
+    admin.messaging().send(message)
+    .then((response) => {
+        functions.logger.log("Message sent successfully")
+    }).catch(() => {
+        throw new functions.https.HttpsError('aborted', "Could not send message")
+    })
+})
+
 exports.addNewUserToDatabase = functions.auth.user().onCreate((user) => {
     const dir = dbUsersRef.child(user.uid)
     dir.set({
@@ -209,7 +247,7 @@ exports.notifyFinalVideoComplete = functions.database.ref('Data/Groups/{groupId}
         })
 
         const message = {
-            data: {finalVideoReady: 'Final Video is Ready!'},
+            data: {finalVideoReady: 'Final Video is Ready to Be Requested!'},
             tokens: registrationTokens,
         }
 

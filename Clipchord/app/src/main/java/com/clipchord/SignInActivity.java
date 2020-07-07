@@ -1,6 +1,7 @@
 package com.clipchord;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewPropertyAnimatorCompat;
 import androidx.vectordrawable.graphics.drawable.AnimationUtilsCompat;
@@ -24,6 +25,7 @@ public class SignInActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
 
     private ProgressBar progressBar;
+    private ConstraintLayout loginBlock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +33,7 @@ public class SignInActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sign_in);
 
         progressBar = this.findViewById(R.id.progressBar);
+        loginBlock = this.findViewById(R.id.loginBlock);
         mAuth = FirebaseAuth.getInstance();
     }
 
@@ -44,12 +47,17 @@ public class SignInActivity extends AppCompatActivity {
     public void updateUI(FirebaseUser user){
         progressBar.animate()
                 .alpha(0)
-                .setDuration(700)
+                .setDuration(300)
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         progressBar.setVisibility(View.GONE);
                     }
                 });
+        loginBlock.setAlpha(0f);
+        loginBlock.setVisibility(View.VISIBLE);
+        loginBlock.animate()
+            .alpha(1f)
+            .setDuration(300);
     }
 }

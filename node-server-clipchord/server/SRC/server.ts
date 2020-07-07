@@ -25,7 +25,29 @@ const firebaseConfig = {
     measurementId: "G-96T9MCEMF1"
 };
 
+class FinalVideoOnCloud {
+    private groupId: string
+    private uid: string
+    private time: number
 
+    constructor(groupId: string, uid: string, time: number) {
+        this.groupId = groupId
+        this.uid = uid
+        this.time = time
+    }
+
+    getUid(): string {
+        return this.uid
+    }
+
+    getGroupId(): string {
+        return this.groupId
+    }
+
+    getTime(): number {
+        return this.time
+    }
+}
 
 
 
@@ -56,7 +78,6 @@ async function signIn() {
     const email = fs.readFileSync('authemail.txt').toString()
 
     await new Promise((resolve, reject) => {
-        console.log(email, password)
         firebase.auth().signInWithEmailAndPassword(email, password).then(
             resolve()
         ).catch(function(error: any) {
@@ -66,8 +87,10 @@ async function signIn() {
     })    
 }
 
-let waitingGroup: string = "None";
-let waitingUser: string = "None";
+let groupAwaitingDownload: string = "None";
+let userAwaitingDownload: string = "None";
+let groupAwaitingFinal: string = "None";
+let userAwaitingFinal: string = "None";
 
 async function downloadFileAndDelete(name: string, destDirName: string, destFileName: string) {
     console.log("dest" + name + destDirName);
@@ -104,56 +127,135 @@ async function downloadFile(name: string, destDirName: string, destFileName: str
     return bucket.file(name);
 }
 
+async function uploadCompletedVideo(groupId: string, uid: string) {
+    bucket.upload(appdir + "Groups/" + groupId + "/finalVideo.mp4", {
+        destination: "Groups/" + groupId + "/users/" + uid + "/finalVideo.mp4"
+    });
+}
+
+
+async function deleteFinalVideo(groupId: string, uid: string) {
+    bucket.file('Groups/' + groupId + '/users/' + uid + '/finalVideo.mp4').delete()
+}
+
 // END OF MOVED FUNCTIONS FROM FILE MANAGER
 // BEGINNING OF MOVED DEFINITIONS FROM DATABASE MANAGER
 const db = admin.database()
 const dbGroupsRef = db.ref('Data/Groups')
 // END OF MOVED DEFINITIONS FROM DATABASE MANAGER
 
-async function run() {
 
+
+async function run() {
 
     // should be outside of loop
     await signIn()
     await wait(10000)
+    let finalVideosOnCloud: FinalVideoOnCloud[] = []
     
-    
-    
-    // check for next video awaiting downloading
-    await new Promise((resolve, reject) => {
-        
-        let getUploadedWaiting = functions.httpsCallable('getUploadedWaiting');
-        getUploadedWaiting({text: 'none'}).then(function(result: any) {
-            waitingGroup = result.data.groupId
-            waitingUser = result.data.uid
-            resolve()
-
-        }).catch(function(error: any) {
-            console.log(error.message)
-            reject()
-        })
-    })
-
-    
-
-    
-    // // download any videos that have not yet been downloaded
-    await new Promise((resolve, reject) => {
-        console.log(waitingGroup, "Group", waitingUser, "User")
-        if (waitingGroup === "None" || waitingUser === "None") resolve()
-        else {
-            downloadFileAndDelete("Groups/" + waitingGroup + "/users/" + waitingUser + "/" + waitingUser + ".mp4", 
-                "Groups/" + waitingGroup + "/users/" + waitingUser, waitingUser + ".mp4")
-            .catch(function(error: any) {
+    while (true) {
+        // check for next video awaiting downloading and next final video requested
+        await new Promise((resolve, reject) => {    
+            let getUploadedWaiting = functions.httpsCallable('getUploadedWaiting');
+            getUploadedWaiting({text: 'none'}).then(function(result: any) {
+                groupAwaitingDownload = result.data.groupId
+                userAwaitingDownload = result.data.uid
+                resolve()
+            }).catch(function(error: any) {
                 console.log(error.message)
-                 reject();
+                reject()
             })
-            dbGroupsRef.child(waitingGroup + "/users/" + waitingUser + "/Downloaded").set(true);
-            resolve()
-        }
+        })
+
+        await new Promise((resolve, reject) => {
+            let getNextFinalRequested = functions.httpsCallable('getNextRequestedVideo')
+            getNextFinalRequested({text: 'none'}).then(function(result: any) {
+                groupAwaitingFinal = result.data.groupId
+                userAwaitingFinal = result.data.uid
+                resolve()
+            }).catch(function(error: any) {
+                console.log(error.message)
+                reject()
+            })
+
+        })
         
-    });
-    console.log("Finished");
+
+
+        // download any videos that have not yet been downloaded
+        await new Promise((resolve, reject) => {
+            console.log(groupAwaitingDownload, "Group", userAwaitingDownload, "User")
+            if (groupAwaitingDownload === "None" || userAwaitingDownload === "None") resolve()
+            else {
+                downloadFileAndDelete("Groups/" + groupAwaitingDownload + "/users/" + userAwaitingDownload + "/" + userAwaitingDownload + ".mp4", 
+                    "Groups/" + groupAwaitingDownload + "/users/" + userAwaitingDownload, userAwaitingDownload + ".mp4")
+                .catch(function(error: any) {
+                    console.log(error.message)
+                    reject();
+                })
+                dbGroupsRef.child(groupAwaitingDownload + "/users/" + userAwaitingDownload + "/Downloaded").set(true);
+                resolve()
+            }
+            
+        });
+
+
+        let finalVideoUploading: boolean = false
+        let videoOnCloud: any = null
+        // upload next requested final video
+        await new Promise((resolve, reject) => {
+            console.log(groupAwaitingFinal, "Group", userAwaitingFinal, "User")
+            if (groupAwaitingFinal === "None" || userAwaitingFinal === "None") resolve()
+            else {
+                uploadCompletedVideo(groupAwaitingFinal, userAwaitingFinal)
+                .catch(function(error: any) {
+                    console.log(error.message)
+                    reject()
+                })
+                finalVideoUploading = true
+                let date = new Date()
+                let time: number = date.getTime() // time in ms since 01/01/1970
+                videoOnCloud = new FinalVideoOnCloud(groupAwaitingFinal, userAwaitingFinal, time)
+                finalVideosOnCloud.push(new FinalVideoOnCloud(groupAwaitingFinal, userAwaitingFinal, time))
+                resolve()
+            }
+        })
+        
+        // delete final videos from cloud that have been on cloud for more than 5 minutes
+        await new Promise((resolve) => {
+            let indicesToSkip: number[] = []
+            let date = new Date()
+            let now: number = date.getTime() // time in ms since 01/01/1970
+            for (let i = 0; i < finalVideosOnCloud.length; i++) {
+                if ((now - finalVideosOnCloud[i].getTime()) >= 300000) {// there are 300000 ms in 5 min
+                    console.log('deleting')
+                    deleteFinalVideo(finalVideosOnCloud[i].getGroupId(), finalVideosOnCloud[i].getUid())
+                    .catch(function(error: any) {
+                        console.log (error.message)
+                    })
+                    indicesToSkip.push(i)
+                }
+            }
+            let newList: FinalVideoOnCloud[] = []
+            for (let i = 0; i < finalVideosOnCloud.length; i++) {
+                if (!(i in indicesToSkip)) {
+                    newList.push(finalVideosOnCloud[i])
+                }
+            }
+            finalVideosOnCloud = newList
+            resolve()
+        })
+        await wait(10000) // only run loop every 10 seconds to avoid burdening system
+        
+        // If a final video was uploaded, don't add it to the list of videos in the cloud until after 
+        // the wait because it takes time for the video to upload
+        await new Promise((resolve) => {
+            if (finalVideoUploading && videoOnCloud != null) {
+                finalVideosOnCloud.push(videoOnCloud)
+            }
+            resolve()
+        })
+    }
 }
 
 run()

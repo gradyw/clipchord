@@ -216,7 +216,6 @@ async function run() {
                 let date = new Date()
                 let time: number = date.getTime() // time in ms since 01/01/1970
                 videoOnCloud = new FinalVideoOnCloud(groupAwaitingFinal, userAwaitingFinal, time)
-                finalVideosOnCloud.push(new FinalVideoOnCloud(groupAwaitingFinal, userAwaitingFinal, time))
                 resolve()
             }
         })

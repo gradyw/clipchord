@@ -38,17 +38,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        signInButton = findViewById(R.id.SIGNIN);
-        signInButton.setOnClickListener(v -> {
-            List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
+        if(user == null) {
+            //List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
 
-            MainActivity.this.startActivityForResult(
+            /*MainActivity.this.startActivityForResult(
                     AuthUI.getInstance()
                             .createSignInIntentBuilder()
                             .setAvailableProviders(providers)
                             .build(),
-                    RC_SIGN_IN);
-        });
+                    RC_SIGN_IN);*/
+            this.startActivity(new Intent(this, SignInActivity.class));
+        }
     }
 
     @Override
@@ -56,14 +56,11 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == RC_SIGN_IN) {
-            IdpResponse response = IdpResponse.fromResultIntent(data);
-
             if (resultCode == RESULT_OK) {
                 user = FirebaseAuth.getInstance().getCurrentUser();
                 Log.d("Auth", "Sign In Succeeded");
                 uid = user.getUid();
                 System.out.println(user.getEmail());
-                startActivity(new Intent(this, UploadTestActivity.class));
             } else {
                 Log.d("Auth", "Sign In Failed");
             }

@@ -2,21 +2,14 @@ package com.clipchord;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.ViewPropertyAnimatorCompat;
-import androidx.vectordrawable.graphics.drawable.AnimationUtilsCompat;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.os.Bundle;
-import android.renderscript.Sampler;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ProgressBar;
-import android.widget.ViewAnimator;
 
+import com.clipchord.ui.login.LoginFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -33,7 +26,7 @@ public class SignInActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sign_in);
 
         progressBar = this.findViewById(R.id.progressBar);
-        loginBlock = this.findViewById(R.id.loginBlock);
+        loginBlock = this.findViewById(R.id.loginBlockLayout);
         mAuth = FirebaseAuth.getInstance();
     }
 

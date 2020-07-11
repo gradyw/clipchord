@@ -1,24 +1,23 @@
 package com.clipchord.ui.login;
 
+import android.util.Patterns;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import android.util.Patterns;
-
-import com.clipchord.data.LoginRepository;
-import com.clipchord.data.Result;
-import com.clipchord.data.model.LoggedInUser;
 import com.clipchord.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginViewModel extends ViewModel {
 
     private MutableLiveData<LoginFormState> loginFormState = new MutableLiveData<>();
     private MutableLiveData<LoginResult> loginResult = new MutableLiveData<>();
-    private LoginRepository loginRepository;
+    private FirebaseAuth firebaseAuth;
 
-    LoginViewModel(LoginRepository loginRepository) {
-        this.loginRepository = loginRepository;
+    LoginViewModel() {
+        this.firebaseAuth = FirebaseAuth.getInstance();
     }
 
     LiveData<LoginFormState> getLoginFormState() {
@@ -29,16 +28,19 @@ public class LoginViewModel extends ViewModel {
         return loginResult;
     }
 
-    public void login(String username, String password) {
+    public void login(String email, String password) {
         // can be launched in a separate asynchronous job
-        Result<LoggedInUser> result = loginRepository.login(username, password);
-
-        if (result instanceof Result.Success) {
-            LoggedInUser data = ((Result.Success<LoggedInUser>) result).getData();
-            loginResult.setValue(new LoginResult(new LoggedInUserView(data.getDisplayName())));
-        } else {
-            loginResult.setValue(new LoginResult(R.string.login_failed));
-        }
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success, update UI with the signed-in user's information
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        loginResult.setValue(new LoginResult(new LoggedInUserView(user.getDisplayName())));
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        loginResult.setValue(new LoginResult(R.string.login_failed));
+                    }
+                });
     }
 
     public void loginDataChanged(String username, String password) {

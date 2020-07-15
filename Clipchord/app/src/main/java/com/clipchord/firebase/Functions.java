@@ -1,4 +1,4 @@
-package com.clipchord;
+package com.clipchord.firebase;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -37,7 +37,7 @@ public class Functions {
                 });
     }
 
-    static Task<String> joinGroup(String groupId) {
+    public static Task<String> joinGroup(String groupId) {
         Map<String, Object> data = new HashMap<>();
         getDeviceToken();
         data.put("groupId", groupId);
@@ -56,7 +56,7 @@ public class Functions {
                 });
     }
 
-    static Task<String> createGroup() {
+    public static Task<String> createGroup() {
         Map<String, Object> data = new HashMap<>();
         getDeviceToken();
         data.put("token", token);
@@ -94,7 +94,7 @@ public class Functions {
                 });
     }
 
-    Task<String> requestFinalVideo() {
+    public static Task<String> requestFinalVideo() {
         Map<String, Object> data = new HashMap<>();
 
         data.put("text", "Request Final Video");

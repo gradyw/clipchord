@@ -7,30 +7,14 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.auth.IdpResponse;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.util.Arrays;
-import java.util.List;
+import com.clipchord.firebase.Firebase;
+import com.clipchord.firebase.Functions;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
 
     Button signInButton;
-    private static FirebaseUser user;
-    private static String uid;
-
-    public static StorageReference getStorageRef() {
-        return storageRef;
-    }
-
-    private static FirebaseStorage storage = FirebaseStorage.getInstance();
-    private static StorageReference storageRef = storage.getReference();
 
 
     @Override
@@ -38,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(user == null) {
+        if(Firebase.getUser() == null) {
             //List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
 
             /*MainActivity.this.startActivityForResult(
@@ -51,29 +35,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
+    @Override // this doesn't run, not leading to a result anymore
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == RC_SIGN_IN) {
             if (resultCode == RESULT_OK) {
-                user = FirebaseAuth.getInstance().getCurrentUser();
+                Firebase.updateUser();
                 Log.d("Auth", "Sign In Succeeded");
-                uid = user.getUid();
-                System.out.println(user.getEmail());
+                System.out.println(Firebase.getUser().getEmail());
+                this.startActivity(new Intent(this, UploadTestActivity.class));
             } else {
                 Log.d("Auth", "Sign In Failed");
             }
+        } else {
+            Log.d("Auth", "Diff request Code");
         }
-    }
-
-    private static void updateUser() {
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-    }
-
-    static String getUid() {
-        updateUser();
-        return uid;
     }
 }
